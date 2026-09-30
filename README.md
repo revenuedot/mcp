@@ -4,7 +4,7 @@
 
 The server has 17 tools to set up products, entitlements, offerings and packages, look up customers, grant or revoke access, add webhooks and follow an import from RevenueCat. Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
 
-> Status (2026-09-30): the hosted server is live at `https://mcp.revenuedot.app/mcp`, in front of RevenueDot Cloud (`https://api.revenuedot.app`). The npm package `@revenuedot/mcp` is not published yet, so the `npx -y @revenuedot/mcp` commands below answer 404 for now. Run it from this repo instead: `pnpm install && pnpm build`, then use `node /path/to/mcp/dist/cli.js` in place of `npx -y @revenuedot/mcp`.
+> Status (2026-09-30): the hosted server is live at `https://mcp.revenuedot.app/mcp`, in front of RevenueDot Cloud (`https://api.revenuedot.app`). The local server is published on npm as [`@revenuedot/mcp`](https://www.npmjs.com/package/@revenuedot/mcp), so `npx -y @revenuedot/mcp` runs the latest release.
 
 ## Connect
 
