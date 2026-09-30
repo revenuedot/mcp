@@ -1,21 +1,50 @@
+# Tests on every push and pull request; on main, deploys mcp.revenuedot.app once the tests pass.
 name: CI
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { path: mcp }
       # The tests start a real RevenueDot server from the monorepo, in-process on PGlite.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { repository: revenuedot/revenuedot, path: revenuedot }
       - uses: pnpm/action-setup@v4
         with: { version: 10 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
       - run: pnpm install --frozen-lockfile
         working-directory: revenuedot
       - run: pnpm install --frozen-lockfile
         working-directory: mcp
       - run: pnpm typecheck && pnpm build && pnpm test
         working-directory: mcp
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: { group: deploy-production, cancel-in-progress: false }
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_DOCKER_BIN: "false"
+      CF_QUIET: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run deploy
+      - name: Live check
+        run: |
+          curl -sf https://mcp.revenuedot.app/.well-known/oauth-protected-resource >/dev/null
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://mcp.revenuedot.app/mcp -H 'content-type: application/json' -d '{}')
+          echo "POST /mcp without a token: $code"; [ "$code" = 401 ]
