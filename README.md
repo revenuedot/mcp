@@ -4,7 +4,7 @@
 
 The server has 17 tools to set up products, entitlements, offerings and packages, look up customers, grant or revoke access, add webhooks and follow an import from RevenueCat. Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
 
-> Status: alpha. `@revenuedot/mcp` is not on npm yet and `mcp.revenuedot.app` is not deployed yet. Until then, run it from this repo (`pnpm install && pnpm build && node dist/cli.js`).
+> Status: alpha. The hosted server is live at `https://mcp.revenuedot.app/mcp`. `@revenuedot/mcp` is not on npm yet; to run it locally, use this repo (`pnpm install && pnpm build && node dist/cli.js`).
 
 ## Connect
 
@@ -83,7 +83,7 @@ pnpm install
 pnpm test        # starts a real RevenueDot server from ../revenuedot (or REVENUEDOT_REPO) on in-memory Postgres
 pnpm typecheck
 pnpm dev         # HTTP on :8788 against REVENUEDOT_URL
-npx wrangler deploy   # Cloudflare Worker (wrangler.toml)
+pnpm run deploy  # Cloudflare Worker with the cf CLI (cloudflare.config.ts, Circo account); needs Node 22.18+
 ```
 
 RevenueDot is not affiliated with RevenueCat, Inc.
