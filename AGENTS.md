@@ -10,4 +10,5 @@ Rules
 - No approval/HITL tools: MCP clients ask the user before writes.
 - OAuth lives in the server (`apps/server/src/routes/oauth.ts`); access tokens are project-scoped secret keys, so this server only passes the bearer token through.
 - Tests run every tool against a real RevenueDot server started in-process from `../revenuedot` (`REVENUEDOT_REPO`). Keep them green: `pnpm typecheck && pnpm test`.
+- Hosted at `https://mcp.revenuedot.app/mcp` (worker `revenuedot-mcp`). `.github/workflows/ci.yml` tests every push and deploys from `main` after the tests pass, so pushing to `main` is a production deploy. Use Node 24. `@revenuedot/mcp` is not on npm yet.
 - Record decisions in files and commit them. Private material goes to `revenuedot/company`, never here.

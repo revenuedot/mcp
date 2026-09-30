@@ -4,13 +4,13 @@
 
 The server has 17 tools to set up products, entitlements, offerings and packages, look up customers, grant or revoke access, add webhooks and follow an import from RevenueCat. Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
 
-> Status: alpha. The hosted server is live at `https://mcp.revenuedot.app/mcp`. `@revenuedot/mcp` is not on npm yet; to run it locally, use this repo (`pnpm install && pnpm build && node dist/cli.js`).
+> Status (2026-09-30): the hosted server is live at `https://mcp.revenuedot.app/mcp`, in front of RevenueDot Cloud (`https://api.revenuedot.app`). The npm package `@revenuedot/mcp` is not published yet, so the `npx -y @revenuedot/mcp` commands below answer 404 for now. Run it from this repo instead: `pnpm install && pnpm build`, then use `node /path/to/mcp/dist/cli.js` in place of `npx -y @revenuedot/mcp`.
 
 ## Connect
 
 **Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`.
 
-**Local (stdio), for RevenueDot Cloud or your own server:**
+**Local (stdio), for RevenueDot Cloud or your own server** (`REVENUEDOT_URL` defaults to `https://api.revenuedot.app`):
 
 ```bash
 # Claude Code
@@ -85,5 +85,7 @@ pnpm typecheck
 pnpm dev         # HTTP on :8788 against REVENUEDOT_URL
 pnpm run deploy  # Cloudflare Worker with the cf CLI (cloudflare.config.ts, Circo account); needs Node 22.18+
 ```
+
+Use Node 24. CI (`.github/workflows/ci.yml`) runs typecheck, build and tests on every push and pull request. On `main` it then deploys `mcp.revenuedot.app` with the `production` environment's secrets and checks it live: the protected resource metadata answers and `POST /mcp` without a token answers 401. Pushing to `main` is a production deploy.
 
 RevenueDot is not affiliated with RevenueCat, Inc.
