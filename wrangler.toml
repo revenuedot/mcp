@@ -1,0 +1,13 @@
+# Hosted RevenueDot MCP server (https://mcp.revenuedot.app/mcp). Deploy with `npx wrangler deploy`.
+name = "revenuedot-mcp"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# routes = [{ pattern = "mcp.revenuedot.app", custom_domain = true }]
+
+[vars]
+# The RevenueDot API, which is also the OAuth authorization server.
+REVENUEDOT_URL = "https://api.revenuedot.app"
+# This server's public origin, used in the OAuth protected resource metadata.
+MCP_PUBLIC_URL = "https://mcp.revenuedot.app"

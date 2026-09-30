@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: mcp }
+      # The tests start a real RevenueDot server from the monorepo, in-process on PGlite.
+      - uses: actions/checkout@v4
+        with: { repository: revenuedot/revenuedot, path: revenuedot }
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: pnpm install --frozen-lockfile
+        working-directory: revenuedot
+      - run: pnpm install --frozen-lockfile
+        working-directory: mcp
+      - run: pnpm typecheck && pnpm build && pnpm test
+        working-directory: mcp
