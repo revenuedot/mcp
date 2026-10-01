@@ -19,12 +19,14 @@ export function errorText(e: unknown) {
 export interface McpServerOptions {
   /** RFC 9728 metadata URL, sent with an insufficient-scope result so the client can ask the user for the missing scope. */
   resourceMetadataUrl?: string;
+  /** Tool names to leave out (a profile for a client whose directory forbids them). */
+  exclude?: string[];
 }
 
 /** An MCP server exposing the shared RevenueDot tools, each executed with the given API client. */
 export function createMcpServer(client: RevenueDotClient, opts: McpServerOptions = {}) {
   const server = new McpServer({ name: "revenuedot", title: "RevenueDot", version: VERSION }, { instructions: INSTRUCTIONS });
-  for (const t of tools) {
+  for (const t of tools.filter((x) => !opts.exclude?.includes(x.name))) {
     const oauth = oauthScopesFor(t.scopes);
     server.registerTool(t.name, {
       title: t.title, description: t.description, inputSchema: t.inputSchema, annotations: { title: t.title, ...t.annotations },

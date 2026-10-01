@@ -33,7 +33,9 @@ export function createHttpApp(opts: HttpOptions = {}) {
     const host = c.req.header("x-forwarded-host");
     return host ? `${c.req.header("x-forwarded-proto") ?? "https"}://${host}` : new URL(c.req.url).origin;
   })();
-  const prmUrl = (c: Context) => `${origin(c)}/.well-known/oauth-protected-resource/mcp`;
+  /** Endpoints: the full tool set at /mcp, and the ChatGPT profile at /chatgpt/mcp (OpenAI bans plugins that move money, so no refunds there). */
+  const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": ["refund-subscription"] };
+  const prmUrl = (c: Context) => `${origin(c)}/.well-known/oauth-protected-resource${c.req.path.startsWith("/chatgpt/") ? "/chatgpt" : ""}/mcp`;
   // Tokens the API recently accepted (per process or Worker isolate), so each MCP message costs one API call, not two.
   const valid = new Map<string, number>();
 
@@ -41,7 +43,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
   app.use("*", cors({ origin: "*", allowHeaders: ["*"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"], exposeHeaders: ["mcp-session-id", "mcp-protocol-version", "www-authenticate"] }));
 
   const metadata = (c: Context) => c.json({
-    resource: `${origin(c)}/mcp`,
+    resource: `${origin(c)}${c.req.path.includes("/chatgpt/") ? "/chatgpt" : ""}/mcp`,
     authorization_servers: [baseUrl],
     scopes_supported: SCOPES,
     bearer_methods_supported: ["header"],
@@ -50,6 +52,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
   });
   app.get("/.well-known/oauth-protected-resource", metadata);
   app.get("/.well-known/oauth-protected-resource/mcp", metadata);
+  app.get("/.well-known/oauth-protected-resource/chatgpt/mcp", metadata);
   app.get("/", (c) => c.json({ name: "RevenueDot MCP", version: VERSION, mcp: `${origin(c)}/mcp`, api: baseUrl }));
   app.get("/.well-known/openai-apps-challenge", (c) => (opts.openaiAppsChallenge ? c.text(opts.openaiAppsChallenge.trim()) : c.notFound()));
   app.get("/health", (c) => c.json({ status: "ok" }));
@@ -61,7 +64,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
     return c.json({ jsonrpc: "2.0", error: { code: -32001, message: description ?? "Authorization required. Connect with OAuth or send Authorization: Bearer sk_..." }, id: null }, 401);
   };
 
-  app.all("/mcp", async (c) => {
+  const handler = (exclude: string[]) => async (c: Context) => {
     const header = c.req.header("authorization");
     const token = header?.replace(/^Bearer\s+/i, "").trim() || opts.apiKey;
     if (!token) return unauthorized(c);
@@ -75,11 +78,12 @@ export function createHttpApp(opts: HttpOptions = {}) {
       if (valid.size > 1000) valid.clear();
       valid.set(token, now + VALID_FOR_MS);
     }
-    const server = createMcpServer(createClient({ baseUrl, apiKey: token, fetch: doFetch }), { resourceMetadataUrl: prmUrl(c) });
+    const server = createMcpServer(createClient({ baseUrl, apiKey: token, fetch: doFetch }), { resourceMetadataUrl: prmUrl(c), exclude });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     await server.connect(transport);
     return transport.handleRequest(c.req.raw);
-  });
+  };
+  for (const [path, exclude] of Object.entries(PROFILES)) app.all(path, handler(exclude));
 
   return app;
 }

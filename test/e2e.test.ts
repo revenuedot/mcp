@@ -117,6 +117,23 @@ class TestOAuthProvider implements OAuthClientProvider {
   async redirectToAuthorization(url: URL) { this.authorizationUrl = url; this.code = await this.approve(url); }
 }
 
+describe("ChatGPT profile endpoint", () => {
+  it("serves /chatgpt/mcp without refund-subscription, with its own protected resource metadata", async () => {
+    const base = mcpUrl.replace("/mcp", "");
+    const client = new Client({ name: "e2e", version: "1.0.0" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/chatgpt/mcp`), { requestInit: { headers: { Authorization: `Bearer ${rd.key}` } } }));
+    const names = (await client.listTools()).tools.map((t) => t.name);
+    expect(names).toHaveLength(33);
+    expect(names).not.toContain("refund-subscription");
+    await client.close();
+    const prm = await (await fetch(`${base}/.well-known/oauth-protected-resource/chatgpt/mcp`)).json();
+    expect(prm).toMatchObject({ resource: `${base}/chatgpt/mcp`, authorization_servers: [rd.url] });
+    const none = await fetch(`${base}/chatgpt/mcp`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    expect(none.status).toBe(401);
+    expect(none.headers.get("www-authenticate")).toContain(`resource_metadata="${base}/.well-known/oauth-protected-resource/chatgpt/mcp"`);
+  });
+});
+
 describe("OAuth: discovery, dynamic registration, consent with the dashboard session, PKCE, then tools on one project", () => {
   it("connects Claude-style: 401 -> metadata -> register -> authorize -> token -> tools limited to the chosen project", async () => {
     const other = await rd.signup("second@example.com", "Second app");

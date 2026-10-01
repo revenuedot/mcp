@@ -7,9 +7,9 @@ import { tools } from "../src/tools.js";
 import { checkListing } from "../scripts/listing-checks.mjs";
 
 /** The ChatGPT app directory and the Claude connector directory both reject lists that break these rules. The list is what a client really receives. */
-async function listTools() {
+async function listTools(exclude: string[] = []) {
   const [a, b] = InMemoryTransport.createLinkedPair();
-  const server = createMcpServer({ baseUrl: "http://unused", request: async () => ({}), project: async () => "proj" });
+  const server = createMcpServer({ baseUrl: "http://unused", request: async () => ({}), project: async () => "proj" }, { exclude });
   await server.connect(a);
   const client = new Client({ name: "listing", version: "1" });
   await client.connect(b);
@@ -19,6 +19,13 @@ async function listTools() {
 describe("directory listing rules", () => {
   it("passes every check for all 34 tools", async () => {
     expect(checkListing(await listTools(), { count: 34 })).toEqual([]);
+  });
+
+  it("the ChatGPT profile has 33 tools and no refund, and passes the same checks", async () => {
+    const t = await listTools(["refund-subscription"]);
+    expect(checkListing(t, { count: 33 })).toEqual([]);
+    expect(t.map((x) => x.name)).not.toContain("refund-subscription");
+    expect(t.map((x) => x.name)).toContain("cancel-subscription");
   });
 
   it("the checker catches the mistakes the directories reject", async () => {
