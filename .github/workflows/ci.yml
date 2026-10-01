@@ -45,4 +45,7 @@ jobs:
       - run: pnpm run deploy
       - name: Live check
         # Discovery, OAuth server features and CORS, as the ChatGPT and Claude directories check them. Needs the API (revenuedot/revenuedot) deployed first.
-        run: node scripts/verify-live.mjs https://mcp.revenuedot.app
+        # A new Worker version can take a few seconds to reach every edge, so retry before failing.
+        run: |
+          for i in 1 2 3 4 5 6; do node scripts/verify-live.mjs https://mcp.revenuedot.app && exit 0; echo "attempt $i failed, waiting"; sleep 10; done
+          exit 1
