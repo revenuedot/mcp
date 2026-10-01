@@ -16,6 +16,8 @@ export default defineConfig({
       REVENUEDOT_URL: bindings.text("https://api.revenuedot.app"),
       // This server's public origin, used in the OAuth protected resource metadata.
       MCP_PUBLIC_URL: bindings.text("https://mcp.revenuedot.app"),
+      // OpenAI's domain verification token for the ChatGPT plugin listing. It is served openly at /.well-known/openai-apps-challenge, so it is not a secret.
+      OPENAI_APPS_CHALLENGE: bindings.text("-89LhkdNTm1PN6Baf0e283dOm2MNlcYnDcUF99t_ozs"),
     },
   },
 });
