@@ -2,6 +2,8 @@
 
 **Connect Claude, ChatGPT, Cursor and other AI assistants to RevenueDot, the open-source subscription backend that works with the RevenueCat SDK.**
 
+[![Watch the 87-second demo of RevenueDot in ChatGPT](https://revenuedot.app/videos/revenuedot-chatgpt-demo.webp)](https://revenuedot.app/videos/revenuedot-chatgpt-demo.mp4)
+
 The server has 34 tools to set up products, entitlements, offerings and packages, find customers and read their history, grant, extend, cancel or refund, add and debug webhooks, check store credentials, read revenue metrics and follow an import from RevenueCat. It is also the server behind the RevenueDot ChatGPT plugin and Claude connector (install: [`revenuedot/agent-skills`](https://github.com/revenuedot/agent-skills)). Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
 
 > Status (2026-09-30): the hosted server is live at `https://mcp.revenuedot.app/mcp`, in front of RevenueDot Cloud (`https://api.revenuedot.app`). The local server is published on npm as [`@revenuedot/mcp`](https://www.npmjs.com/package/@revenuedot/mcp), so `npx -y @revenuedot/mcp` runs the latest release.
