@@ -11,10 +11,14 @@ export interface HttpOptions {
   publicUrl?: string;
   /** A key used when a request has no Authorization header. Only for a local, single-user server. */
   apiKey?: string;
+  /** Value for GET /.well-known/openai-apps-challenge, which OpenAI asks for to verify the domain before a ChatGPT listing. */
+  openaiAppsChallenge?: string;
   fetch?: typeof fetch;
 }
 
-const SCOPES = ["project:read", "project:write"];
+const SCOPES = ["project:read", "project:write", "project:support"];
+/** What a first connection asks for. Money actions (project:support) are asked for later, only when a tool needs them. */
+const FIRST_SCOPES = ["project:read", "project:write"];
 const VALID_FOR_MS = 60_000;
 
 /**
@@ -42,15 +46,16 @@ export function createHttpApp(opts: HttpOptions = {}) {
     scopes_supported: SCOPES,
     bearer_methods_supported: ["header"],
     resource_name: "RevenueDot",
-    resource_documentation: "https://revenuedot.app/docs/mcp",
+    resource_documentation: "https://revenuedot.app/docs/guides/connect-ai-assistants",
   });
   app.get("/.well-known/oauth-protected-resource", metadata);
   app.get("/.well-known/oauth-protected-resource/mcp", metadata);
   app.get("/", (c) => c.json({ name: "RevenueDot MCP", version: VERSION, mcp: `${origin(c)}/mcp`, api: baseUrl }));
+  app.get("/.well-known/openai-apps-challenge", (c) => (opts.openaiAppsChallenge ? c.text(opts.openaiAppsChallenge.trim()) : c.notFound()));
   app.get("/health", (c) => c.json({ status: "ok" }));
 
   const unauthorized = (c: Context, error?: string, description?: string) => {
-    const parts = [`resource_metadata="${prmUrl(c)}"`, `scope="${SCOPES.join(" ")}"`];
+    const parts = [`resource_metadata="${prmUrl(c)}"`, `scope="${FIRST_SCOPES.join(" ")}"`];
     if (error) parts.unshift(`error="${error}"`, `error_description="${description}"`);
     c.header("WWW-Authenticate", `Bearer ${parts.join(", ")}`);
     return c.json({ jsonrpc: "2.0", error: { code: -32001, message: description ?? "Authorization required. Connect with OAuth or send Authorization: Bearer sk_..." }, id: null }, 401);
@@ -70,7 +75,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
       if (valid.size > 1000) valid.clear();
       valid.set(token, now + VALID_FOR_MS);
     }
-    const server = createMcpServer(createClient({ baseUrl, apiKey: token, fetch: doFetch }));
+    const server = createMcpServer(createClient({ baseUrl, apiKey: token, fetch: doFetch }), { resourceMetadataUrl: prmUrl(c) });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     await server.connect(transport);
     return transport.handleRequest(c.req.raw);

@@ -1,6 +1,6 @@
 {
   "name": "@revenuedot/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for RevenueDot, the open-source subscription backend that works with the RevenueCat SDK. Manage products, entitlements, offerings, customers and webhooks from Claude, ChatGPT, Cursor and other AI assistants.",
   "license": "MIT",
   "type": "module",

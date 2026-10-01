@@ -35,23 +35,32 @@ async function connect(headers: Record<string, string>) {
 }
 
 describe("Streamable HTTP with a secret key", () => {
-  it("lists 17 tools with schemas and annotations, and runs a setup through them", async () => {
+  it("lists 34 tools with schemas, annotations and security schemes, and runs a setup through them", async () => {
     const client = await connect({ Authorization: `Bearer ${rd.key}` });
     expect(client.getServerVersion()).toMatchObject({ name: "revenuedot" });
     expect(client.getInstructions()).toContain("RevenueDot");
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(17);
+    expect(tools).toHaveLength(34);
     const grant = tools.find((t) => t.name === "grant-customer-entitlement")!;
     expect(grant.inputSchema.required).toEqual(expect.arrayContaining(["customer_id", "entitlement_id", "expires_at"]));
     expect(grant.annotations).toMatchObject({ readOnlyHint: false, title: "Grant entitlement to customer" });
     expect(tools.find((t) => t.name === "list-offerings")!.annotations).toMatchObject({ readOnlyHint: true });
+    // ChatGPT reads the per-tool security scheme; each tool names the OAuth scopes it needs.
+    const schemes = (n: string) => (tools.find((t) => t.name === n) as any)._meta.securitySchemes;
+    expect(schemes("list-customers")).toEqual([{ type: "oauth2", scopes: ["project:read"] }]);
+    expect(schemes("create-product")).toEqual([{ type: "oauth2", scopes: ["project:write"] }]);
+    expect(schemes("refund-subscription")).toEqual([{ type: "oauth2", scopes: ["project:write", "project:support"] }]);
+    expect(tools.find((t) => t.name === "refund-subscription")!.annotations).toMatchObject({ destructiveHint: true, readOnlyHint: false });
 
     const product = text(await client.callTool({ name: "create-product", arguments: { app_id: rd.apps.test, store_identifier: "e2e_monthly", type: "subscription", subscription_duration: "P1M" } }));
     const ent = text(await client.callTool({ name: "create-entitlement", arguments: { lookup_key: "e2e", display_name: "E2E" } }));
     await client.callTool({ name: "attach-products-to-entitlement", arguments: { entitlement_id: ent.id, product_ids: [product.id] } });
     const granted = text(await client.callTool({ name: "grant-customer-entitlement", arguments: { customer_id: "mcp_user", entitlement_id: "e2e", expires_at: "7d" } }));
     expect(granted.active_entitlements.items[0].entitlement_id).toBe(ent.id);
-    const status = text(await client.callTool({ name: "get-import-status", arguments: {} }));
+    // Results carry the same data as structuredContent, so ChatGPT and Claude can use fields without parsing text.
+    const raw = await client.callTool({ name: "get-import-status", arguments: {} }) as any;
+    expect(raw.structuredContent).toEqual(JSON.parse(raw.content[0].text));
+    const status = text(raw);
     expect(status.customers).toBeGreaterThanOrEqual(1);
     await client.close();
   });
@@ -62,6 +71,12 @@ describe("Streamable HTTP with a secret key", () => {
     expect(r.isError).toBe(true);
     expect(r.content[0].text).toContain("403 authorization_error");
     expect(r.content[0].text).toContain("project_configuration:entitlements:read_write");
+    // A missing permission also asks the client to run consent again for the scope the tool needs (ChatGPT and Claude read this).
+    expect(r._meta["mcp/www_authenticate"][0]).toContain('error="insufficient_scope", error_description="Create entitlement needs more access", scope="project:write"');
+    expect(r._meta["mcp/www_authenticate"][0]).toContain(`resource_metadata="${mcpUrl.replace("/mcp", "")}/.well-known/oauth-protected-resource/mcp"`);
+    const notFound = await client.callTool({ name: "list-apps", arguments: { project_id: "proj_nope" } }) as any;
+    expect(notFound.isError).toBe(true);
+    expect(notFound._meta).toBeUndefined();
     const bad = await client.callTool({ name: "create-product", arguments: { type: "nope" } }) as any;
     expect(bad.isError).toBe(true);
     await client.close();
@@ -77,7 +92,7 @@ describe("Streamable HTTP with a secret key", () => {
     expect(bad.status).toBe(401);
     expect(bad.headers.get("www-authenticate")).toContain('error="invalid_token"');
     const prm = await (await fetch(`${mcpUrl.replace("/mcp", "")}/.well-known/oauth-protected-resource/mcp`)).json();
-    expect(prm).toEqual(expect.objectContaining({ resource: mcpUrl, authorization_servers: [rd.url], scopes_supported: ["project:read", "project:write"] }));
+    expect(prm).toEqual(expect.objectContaining({ resource: mcpUrl, authorization_servers: [rd.url], scopes_supported: ["project:read", "project:write", "project:support"] }));
   });
 });
 
@@ -87,10 +102,10 @@ class TestOAuthProvider implements OAuthClientProvider {
   saved?: OAuthTokens;
   verifier = "";
   authorizationUrl?: URL;
-  constructor(private approve: (url: URL) => Promise<string>) {}
+  constructor(private approve: (url: URL) => Promise<string>, private scope = "project:write") {}
   get redirectUrl() { return "http://localhost:39999/callback"; }
   get clientMetadata(): OAuthClientMetadata {
-    return { client_name: "E2E Client", redirect_uris: [this.redirectUrl], grant_types: ["authorization_code"], response_types: ["code"], token_endpoint_auth_method: "none", scope: "project:write" };
+    return { client_name: "E2E Client", redirect_uris: [this.redirectUrl], grant_types: ["authorization_code"], response_types: ["code"], token_endpoint_auth_method: "none", scope: this.scope };
   }
   clientInformation() { return this.info; }
   saveClientInformation(i: OAuthClientInformationMixed) { this.info = i; }
@@ -136,7 +151,7 @@ describe("OAuth: discovery, dynamic registration, consent with the dashboard ses
 
     const connected = new Client({ name: "oauth-e2e", version: "1.0.0" });
     await connected.connect(new StreamableHTTPClientTransport(new URL(mcpUrl), { authProvider: provider }));
-    expect((await connected.listTools()).tools).toHaveLength(17);
+    expect((await connected.listTools()).tools).toHaveLength(34);
     const projects = text(await connected.callTool({ name: "list-projects", arguments: {} }));
     expect(projects.items.map((p: any) => p.id)).toEqual([rd.projectId]);
     const denied = await connected.callTool({ name: "list-apps", arguments: { project_id: other.projectId } }) as any;
@@ -144,6 +159,11 @@ describe("OAuth: discovery, dynamic registration, consent with the dashboard ses
     expect(denied.content[0].text).toContain("404");
     const ent = text(await connected.callTool({ name: "create-entitlement", arguments: { lookup_key: "oauth", display_name: "Via OAuth" } }));
     expect(ent.lookup_key).toBe("oauth");
+    // This token has no money-action scope: refunding is refused with a request for exactly that extra consent.
+    const refund = await connected.callTool({ name: "refund-subscription", arguments: { subscription_id: "sub_nope" } }) as any;
+    expect(refund.isError).toBe(true);
+    expect(refund.content[0].text).toContain("403");
+    expect(refund._meta["mcp/www_authenticate"][0]).toContain('scope="project:write project:support"');
     await connected.close();
 
     // Revoking the key in the dashboard ends the connection: the MCP server answers 401 invalid_token again.
@@ -158,6 +178,37 @@ describe("OAuth: discovery, dynamic registration, consent with the dashboard ses
   });
 });
 
+describe("OAuth step-up: the money-actions scope", () => {
+  it("a token consented with project:support passes the scope check for refund, cancel, extend and test purchases", async () => {
+    const approve = async (url: URL) => {
+      const html = await (await fetch(url, { headers: { cookie: rd.cookie } })).text();
+      expect(html).toContain("Money actions");
+      // A first connection does not pre-tick it (the 401 asks for read and write only); the user ticks it here.
+      expect(html).toMatch(/name="support" value="1">/);
+      const fields = Object.fromEntries([...html.matchAll(/<input type="hidden" name="([^"]+)" value="([^"]*)">/g)].map((m) => [m[1]!, m[2]!.replace(/&amp;/g, "&")]));
+      const res = await fetch(new URL("/oauth/authorize", url), {
+        method: "POST", redirect: "manual", headers: { cookie: rd.cookie, "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ ...fields, project_id: rd.projectId, access: "project:write", support: "1", decision: "allow" }),
+      });
+      return new URL(res.headers.get("location")!).searchParams.get("code")!;
+    };
+    const provider = new TestOAuthProvider(approve, "project:write project:support");
+    const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), { authProvider: provider });
+    await expect(new Client({ name: "s", version: "1" }).connect(transport)).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(provider.authorizationUrl!.searchParams.get("scope")).not.toContain("project:support");
+    await transport.finishAuth(provider.code!);
+    const client = new Client({ name: "s", version: "1" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(mcpUrl), { authProvider: provider }));
+    for (const [name, args] of [["refund-subscription", { subscription_id: "sub_nope" }], ["cancel-subscription", { subscription_id: "sub_nope" }], ["extend-subscription", { subscription_id: "sub_nope", extend_by_days: 1 }]] as const) {
+      const r = await client.callTool({ name, arguments: args }) as any;
+      // 404 means the permission check passed and only the subscription is missing; 403 would mean the scope was not granted.
+      expect(r.content[0].text, name).toContain("404");
+      expect(r._meta).toBeUndefined();
+    }
+    await client.close();
+  });
+});
+
 describe("stdio (npx @revenuedot/mcp)", () => {
   it("starts from the CLI with REVENUEDOT_URL and REVENUEDOT_API_KEY and serves the same tools", async () => {
     const root = resolve(import.meta.dirname, "..");
@@ -167,7 +218,7 @@ describe("stdio (npx @revenuedot/mcp)", () => {
     });
     const client = new Client({ name: "stdio-e2e", version: "1.0.0" });
     await client.connect(transport);
-    expect((await client.listTools()).tools).toHaveLength(17);
+    expect((await client.listTools()).tools).toHaveLength(34);
     const apps = text(await client.callTool({ name: "list-apps", arguments: {} }));
     expect(apps.items).toHaveLength(2);
     await client.close();

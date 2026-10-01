@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, RevenueDotApiError, type RevenueDotClient } from "../src/client.js";
-import { runTool, toEpochMs, tools } from "../src/tools.js";
+import { oauthScopesFor, runTool, toEpochMs, tools } from "../src/tools.js";
 import { startRevenueDot, type RevenueDot } from "./revenuedot.js";
 
 /** Every tool executor against a real RevenueDot server (in-process, PGlite), in the order an agent sets up a project. */
@@ -22,12 +22,20 @@ describe("tool catalog", () => {
       "list-projects", "list-apps", "list-products", "create-product", "list-entitlements", "create-entitlement", "attach-products-to-entitlement",
       "list-offerings", "create-offering", "create-packages", "attach-products-to-package", "get-customer", "grant-customer-entitlement",
       "revoke-customer-entitlement", "list-webhook-integrations", "create-webhook-integration", "get-import-status",
+      "get-project-health", "get-metrics", "list-customers", "list-transactions", "list-events", "set-customer-attributes", "delete-customer",
+      "extend-subscription", "cancel-subscription", "refund-subscription", "create-test-purchase", "archive-offering", "list-webhook-deliveries",
+      "retry-webhook-delivery", "send-test-webhook", "delete-webhook-integration", "verify-store-credentials",
     ]);
+    const readOnly = tools.filter((t) => t.annotations.readOnlyHint).map((t) => t.name);
+    expect(readOnly).toHaveLength(15);
+    expect(tools.filter((t) => t.annotations.destructiveHint).map((t) => t.name).sort()).toEqual(["archive-offering", "cancel-subscription", "delete-customer", "delete-webhook-integration", "refund-subscription", "revoke-customer-entitlement"]);
+    expect(tools).toHaveLength(34);
     for (const t of tools) {
       expect(t.name).toMatch(/^[a-z]+(-[a-z]+)+$/);
       expect(t.description.length).toBeGreaterThan(30);
       expect(t.scopes.length).toBeGreaterThan(0);
-      expect(t.annotations.readOnlyHint).toBe(t.name.startsWith("list-") || t.name.startsWith("get-"));
+      // Reads never carry a write permission, and writes always do.
+      expect(t.scopes.some((x) => x.endsWith(":read_write"))).toBe(!t.annotations.readOnlyHint);
     }
   });
 });
@@ -132,6 +140,111 @@ describe("tools against a live RevenueDot server", () => {
     await expect(runTool(createClient({ baseUrl: rd.url, apiKey: "sk_bad" }), "list-projects", {})).rejects.toMatchObject({ status: 401, type: "authentication_error" });
     await expect(run("create-product", { app_id: rd.apps.test, type: "subscription" })).rejects.toThrow(/store_identifier/);
     await expect(runTool(createClient({ baseUrl: "http://127.0.0.1:1", apiKey: rd.key }), "list-projects", {})).rejects.toMatchObject({ type: "network_error" });
+  });
+});
+
+describe("support and operations tools against a live server", () => {
+  const sub = async (customer: string) => (await run("get-customer", { customer_id: customer })).subscriptions[0];
+
+  it("create-test-purchase runs a lifecycle through the real pipeline; list-customers, list-transactions and list-events find it", async () => {
+    const t = await run("create-test-purchase", { app_user_id: "buyer_1", product_id: ids.testMonthly, scenario: "trial_conversion" });
+    expect(t).toMatchObject({ object: "test_purchase", scenario: "trial_conversion" });
+    expect(t.event_types.length).toBeGreaterThanOrEqual(2);
+    await run("set-customer-attributes", { customer_id: "buyer_1", attributes: [{ name: "$email", value: "Buyer@Example.com" }, { name: "plan_note", value: "vip" }] });
+    // Search by app user id and by email (case-insensitive), nothing for a stranger.
+    expect((await run("list-customers", { search: "buyer_1" })).items.map((c: any) => c.id)).toEqual(["buyer_1"]);
+    expect((await run("list-customers", { search: "buyer@example.com" })).items.map((c: any) => c.id)).toEqual(["buyer_1"]);
+    expect((await run("list-customers", { search: "nobody" })).items).toEqual([]);
+    expect((await run("list-customers")).items.map((c: any) => c.id)).toEqual(expect.arrayContaining(["buyer_1", "user_42"]));
+    const tx = await run("list-transactions", { customer_id: "buyer_1", environment: "sandbox" });
+    expect(tx.items.length).toBeGreaterThanOrEqual(2);
+    expect(tx.items.every((x: any) => x.customer_id === "buyer_1" && x.environment === "sandbox")).toBe(true);
+    const ev = await run("list-events", { customer_id: "buyer_1", types: ["INITIAL_PURCHASE"] });
+    expect(ev.items.map((e: any) => e.type)).toEqual(["INITIAL_PURCHASE"]);
+    expect((await run("list-events", { customer_id: "nobody" })).items).toEqual([]);
+    const c = await run("get-customer", { customer_id: "buyer_1" });
+    expect(c.subscriptions[0]).toMatchObject({ store: "test_store", gives_access: true });
+  });
+
+  it("set-customer-attributes: a null value removes the attribute", async () => {
+    await run("set-customer-attributes", { customer_id: "buyer_1", attributes: [{ name: "plan_note", value: null }] });
+    const c = await run("get-customer", { customer_id: "buyer_1" });
+    const names = (c.attributes?.items ?? []).map((a: any) => a.name);
+    expect(names).toContain("$email");
+    expect(names).not.toContain("plan_note");
+  });
+
+  it("extend-subscription asks for exactly one extension; cancel and refund pass the store's answer through", async () => {
+    const s = await sub("buyer_1");
+    await expect(run("extend-subscription", { subscription_id: s.id })).rejects.toMatchObject({ status: 400 });
+    await expect(run("extend-subscription", { subscription_id: s.id, extend_by_days: 3, extend_until: "2030-01-01" })).rejects.toMatchObject({ status: 400 });
+    // The Test Store has no server-side extend, cancel or refund; the API says so in plain words and the tool passes it on.
+    const e = await run("extend-subscription", { subscription_id: s.id, extend_by_days: 3 }).catch((x) => x);
+    expect(e).toMatchObject({ status: 422 });
+    expect(e.message).toMatch(/Test Store/);
+    for (const name of ["cancel-subscription", "refund-subscription"]) {
+      const r = await run(name, { subscription_id: s.id }).catch((x) => x);
+      expect(r instanceof Error ? r.message : JSON.stringify(r)).toBeTruthy();
+    }
+    await expect(run("cancel-subscription", { subscription_id: "sub_nope" })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("get-metrics returns the overview, or one metric's history; get-project-health lists each app", async () => {
+    const o = await run("get-metrics");
+    expect(o.metrics.map((m: any) => m.id)).toEqual(expect.arrayContaining(["mrr", "revenue", "active_subscriptions"]));
+    const sandbox = await run("get-metrics", { environment: "sandbox" });
+    expect(sandbox.object).toBe("overview_metrics");
+    const h = await run("get-metrics", { metric: "revenue", days: 7, environment: "sandbox" });
+    expect(h).toMatchObject({ object: "metric_history", id: "revenue", days: 7 });
+    await expect(run("get-metrics", { metric: "nope" })).rejects.toThrow();
+    const health = await run("get-project-health");
+    expect(health.apps.map((a: any) => a.id).sort()).toEqual([rd.apps.ios, rd.apps.test].sort());
+  });
+
+  it("verify-store-credentials checks saved credentials only: its input has no place for a secret", async () => {
+    const t = tools.find((x) => x.name === "verify-store-credentials")!;
+    expect(Object.keys(t.inputSchema).sort()).toEqual(["app_id", "project_id"]);
+    const r = await run("verify-store-credentials", { app_id: rd.apps.ios });
+    expect(r).toMatchObject({ object: "credentials_check", app_id: rd.apps.ios, valid: false });
+    expect(typeof r.message).toBe("string");
+  });
+
+  it("webhooks: test event, delivery list, retry, delete", async () => {
+    const w = await run("create-webhook-integration", { name: "Ops", url: "https://example.com/hooks/ops" });
+    const sent = await run("send-test-webhook", { webhook_id: w.id });
+    expect(JSON.stringify(sent)).toMatch(/TEST|test/);
+    const d = await run("list-webhook-deliveries", { webhook_id: w.id });
+    expect(d.items.length).toBeGreaterThanOrEqual(1);
+    expect(d.items[0]).toMatchObject({ object: "webhook_delivery", webhook_integration_id: w.id });
+    expect((await run("list-webhook-deliveries", { webhook_id: w.id, status: "delivered" })).items.every((x: any) => x.status === "delivered")).toBe(true);
+    const retried = await run("retry-webhook-delivery", { webhook_id: w.id, delivery_id: d.items[0].id });
+    expect(retried.id).toBe(d.items[0].id);
+    await expect(run("retry-webhook-delivery", { webhook_id: w.id, delivery_id: "nope" })).rejects.toMatchObject({ status: 404 });
+    const del = await run("delete-webhook-integration", { webhook_id: w.id });
+    expect(del).toMatchObject({ object: "webhook_integration", id: w.id });
+    await expect(run("send-test-webhook", { webhook_id: w.id })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("archive-offering refuses the current offering and hides another", async () => {
+    const list = (await run("list-offerings")).items;
+    const current = list.find((o: any) => o.is_current);
+    const other = list.find((o: any) => !o.is_current);
+    await expect(run("archive-offering", { offering_id: current.id })).rejects.toMatchObject({ status: 422 });
+    expect(await run("archive-offering", { offering_id: other.id })).toMatchObject({ id: other.id });
+  });
+
+  it("delete-customer removes the customer", async () => {
+    expect(await run("delete-customer", { customer_id: "buyer_1" })).toMatchObject({ object: "customer" });
+    await expect(run("get-customer", { customer_id: "buyer_1" })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("scope requirements: reads need project:read, writes project:write, money actions also project:support", () => {
+    const need = (name: string) => oauthScopesFor(tools.find((t) => t.name === name)!.scopes);
+    expect(need("list-customers")).toEqual(["project:read"]);
+    expect(need("grant-customer-entitlement")).toEqual(["project:write"]);
+    expect(need("delete-webhook-integration")).toEqual(["project:write"]);
+    for (const n of ["extend-subscription", "cancel-subscription", "refund-subscription", "create-test-purchase"]) expect(need(n)).toEqual(["project:write", "project:support"]);
+    expect(tools.filter((t) => oauthScopesFor(t.scopes).includes("project:support")).map((t) => t.name)).toHaveLength(4);
   });
 });
 

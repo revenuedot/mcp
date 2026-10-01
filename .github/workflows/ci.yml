@@ -44,7 +44,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run deploy
       - name: Live check
-        run: |
-          curl -sf https://mcp.revenuedot.app/.well-known/oauth-protected-resource >/dev/null
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://mcp.revenuedot.app/mcp -H 'content-type: application/json' -d '{}')
-          echo "POST /mcp without a token: $code"; [ "$code" = 401 ]
+        # Discovery, OAuth server features and CORS, as the ChatGPT and Claude directories check them. Needs the API (revenuedot/revenuedot) deployed first.
+        run: node scripts/verify-live.mjs https://mcp.revenuedot.app
