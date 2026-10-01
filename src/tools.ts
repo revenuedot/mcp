@@ -362,7 +362,7 @@ export const tools: ToolDefinition[] = [
     name: "archive-offering", title: "Archive offering",
     description: "Hides an offering from apps without deleting it (it can be unarchived in the dashboard). The current offering cannot be archived.",
     inputSchema: { project_id: projectId, offering_id: z.string().describe("Offering id (ofrng...).") },
-    annotations: DESTROY, scopes: ["project_configuration:offerings:read_write"],
+    annotations: DESTROY_OPEN, scopes: ["project_configuration:offerings:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/offerings/${enc(a.offering_id)}/actions/archive`),
   }),
   define({

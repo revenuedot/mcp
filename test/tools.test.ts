@@ -32,7 +32,7 @@ describe("tool catalog", () => {
     expect(tools).toHaveLength(34);
     // Tools that reach Apple, Google or the owner's own webhook URL are open world (OpenAI's scan checks this).
     expect(tools.filter((t) => t.annotations.openWorldHint).map((t) => t.name).sort()).toEqual([
-      "cancel-subscription", "create-offering", "create-test-purchase", "create-webhook-integration", "extend-subscription", "refund-subscription",
+      "archive-offering", "cancel-subscription", "create-offering", "create-test-purchase", "create-webhook-integration", "extend-subscription", "refund-subscription",
       "retry-webhook-delivery", "send-test-webhook", "verify-store-credentials",
     ]);
     for (const t of tools) {
