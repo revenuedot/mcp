@@ -193,7 +193,7 @@ export const tools: ToolDefinition[] = [
   }),
   define({
     name: "grant-customer-entitlement", title: "Grant entitlement to customer",
-    description: "Gives a customer promotional access to an entitlement until expires_at, without a store purchase. The customer is created if new. Granting again with the same end date does nothing.",
+    description: "Grants a customer time-limited access to an entitlement until expires_at, for support or goodwill. The access ends by itself and can be revoked with revoke-customer-entitlement. The customer is created if new. Granting again with the same end date does nothing.",
     inputSchema: {
       project_id: projectId, customer_id: z.string().min(1).describe("The app user id."),
       entitlement_id: z.string().describe("Entitlement id (entl...) or lookup key such as pro."),
@@ -317,7 +317,7 @@ export const tools: ToolDefinition[] = [
   }),
   define({
     name: "extend-subscription", title: "Extend subscription",
-    description: "Gives a subscriber more time at no charge: by days, or until a date. Works on Google Play and App Store subscriptions (App Store needs a reason and at most 90 days). Take the subscription id from get-customer.",
+    description: "Adds time to a subscriber's existing subscription for support or goodwill: by days, or until a date. Works on Google Play and App Store subscriptions (App Store needs a reason and at most 90 days). Take the subscription id from get-customer.",
     inputSchema: {
       project_id: projectId, subscription_id: z.string().min(1).describe("Subscription id from get-customer."),
       extend_by_days: z.number().int().min(1).optional().describe("Days to add. Use this or extend_until."),
