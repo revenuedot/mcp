@@ -83,7 +83,7 @@ Every tool takes an optional `project_id`. Leave it out when the key or connecti
 | `delete-webhook-integration` | Deletes a webhook (destructive) | `DELETE /integrations/webhooks/{id}` |
 | `verify-store-credentials` | Calls Apple or Google with the saved key and reports whether it works | `POST /apps/{id}/actions/verify_credentials` |
 | `get-app-store-settings` | Notification URL for App Store Connect or Pub/Sub, forward URL, last notification and forward; credentials only as configured or not | `GET /apps/{id}/store_settings` |
-| `update-app` | Renames an app, sets or clears `notification_forward_url`, sets `track_new_purchases`; no credentials | `POST /apps/{id}` |
+| `update-app` | Renames an app, sets or clears `notification_forward_url`, sets `track_new_purchases`; no credentials (destructive: it changes where store notifications go) | `POST /apps/{id}` |
 
 No tool accepts a key, password or credential: store keys and webhook headers are entered in the dashboard. Creating a webhook returns its signing secret once.
 

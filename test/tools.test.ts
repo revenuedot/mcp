@@ -28,7 +28,7 @@ describe("tool catalog", () => {
     ]);
     const readOnly = tools.filter((t) => t.annotations.readOnlyHint).map((t) => t.name);
     expect(readOnly).toHaveLength(17);
-    expect(tools.filter((t) => t.annotations.destructiveHint).map((t) => t.name).sort()).toEqual(["archive-offering", "cancel-subscription", "delete-customer", "delete-webhook-integration", "refund-subscription", "revoke-customer-entitlement", "set-customer-attributes"]);
+    expect(tools.filter((t) => t.annotations.destructiveHint).map((t) => t.name).sort()).toEqual(["archive-offering", "cancel-subscription", "delete-customer", "delete-webhook-integration", "refund-subscription", "revoke-customer-entitlement", "set-customer-attributes", "update-app"]);
     expect(tools).toHaveLength(38);
     // Tools that reach Apple, Google or the owner's own webhook URL are open world (OpenAI's scan checks this).
     expect(tools.filter((t) => t.annotations.openWorldHint).map((t) => t.name).sort()).toEqual([

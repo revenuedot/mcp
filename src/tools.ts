@@ -206,7 +206,7 @@ export const tools: ToolDefinition[] = [
   }),
   define({
     name: "attach-products-to-package", title: "Attach products to package",
-    description: "Puts products in a package, at most one per app (e.g. the iOS, Android and Test Store monthly products in $rc_monthly).",
+    description: "Puts products in a package in this RevenueDot project's own catalog, at most one per app (e.g. the iOS, Android and Test Store monthly products in $rc_monthly). It changes only RevenueDot data: nothing is sent to Apple, Google or any other service.",
     inputSchema: {
       project_id: projectId, package_id: z.string().describe("Package id (pkge...)."),
       product_ids: z.array(z.string()).min(1).max(50).describe("Product ids (prod...)."),
@@ -461,7 +461,8 @@ export const tools: ToolDefinition[] = [
       notification_forward_url: z.string().max(2048).nullable().optional().describe("https URL that receives a copy of every store notification; empty string or null turns forwarding off. App Store and Google Play apps only."),
       track_new_purchases: z.boolean().optional().describe("Create customers for store purchases the SDK has not reported yet. App Store and Google Play apps only."),
     },
-    annotations: { ...ATTACH, openWorldHint: true }, scopes: ["project_configuration:apps:read_write"],
+    // Destructive: turning forwarding on or off changes where store notifications go, so clients confirm each call.
+    annotations: { ...ATTACH, destructiveHint: true, openWorldHint: true }, scopes: ["project_configuration:apps:read_write"],
     run: async (c, a) => {
       const base = await P(c, a.project_id);
       const app = await c.request<{ type: string }>("GET", `${base}/apps/${enc(a.app_id)}`);
