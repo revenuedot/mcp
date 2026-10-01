@@ -140,13 +140,13 @@ describe("ChatGPT profile endpoint", () => {
     expect(none.status).toBe(401);
     expect(none.headers.get("www-authenticate")).toContain(`resource_metadata="${base}/.well-known/oauth-protected-resource/chatgpt/mcp"`);
   });
-  it("serves /claude/mcp without refund-subscription, with its own protected resource metadata", async () => {
+  it("serves /claude/mcp with every tool, with its own protected resource metadata", async () => {
     const base = mcpUrl.replace("/mcp", "");
     const client = new Client({ name: "e2e", version: "1.0.0" });
     await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/claude/mcp`), { requestInit: { headers: { Authorization: `Bearer ${rd.key}` } } }));
     const names = (await client.listTools()).tools.map((t) => t.name);
-    expect(names).toHaveLength(33);
-    expect(names).not.toContain("refund-subscription");
+    expect(names).toHaveLength(34);
+    expect(names).toContain("refund-subscription");
     await client.close();
     const prm = await (await fetch(`${base}/.well-known/oauth-protected-resource/claude/mcp`)).json();
     expect(prm).toMatchObject({ resource: `${base}/claude/mcp`, authorization_servers: [rd.url] });

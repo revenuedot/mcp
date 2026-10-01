@@ -36,9 +36,9 @@ export function createHttpApp(opts: HttpOptions = {}) {
     const host = c.req.header("x-forwarded-host");
     return host ? `${c.req.header("x-forwarded-proto") ?? "https"}://${host}` : new URL(c.req.url).origin;
   })();
-  /** Endpoints: the full tool set at /mcp, and the directory profiles at /chatgpt/mcp and /claude/mcp. OpenAI and
-   * Anthropic both refuse listings that move money, so those two have no refunds. */
-  const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": ["refund-subscription"], "/claude/mcp": ["refund-subscription"] };
+  /** Endpoints: the full tool set at /mcp and /claude/mcp (the Claude directory listing's URL), and the ChatGPT
+   * profile at /chatgpt/mcp, which has no refunds because OpenAI refuses plugins that move money. */
+  const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": ["refund-subscription"], "/claude/mcp": [] as string[] };
   // "/chatgpt" for /chatgpt/mcp and its metadata path, "" for /mcp.
   const prefix = (c: Context) => /\/(chatgpt|claude)\/mcp$/.exec(c.req.path)?.[0].slice(0, -4) ?? "";
   const prmUrl = (c: Context) => `${origin(c)}/.well-known/oauth-protected-resource${prefix(c)}/mcp`;
