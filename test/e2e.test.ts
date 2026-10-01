@@ -117,6 +117,14 @@ class TestOAuthProvider implements OAuthClientProvider {
   async redirectToAuthorization(url: URL) { this.authorizationUrl = url; this.code = await this.approve(url); }
 }
 
+describe("sign-in host", () => {
+  it("names the dashboard host as the authorization server when authUrl is set, so the dashboard session is found", async () => {
+    const app = createHttpApp({ baseUrl: "https://api.example.com", authUrl: "https://app.example.com/", publicUrl: "https://mcp.example.com" });
+    const prm = await (await app.fetch(new Request("https://mcp.example.com/.well-known/oauth-protected-resource/mcp"))).json();
+    expect(prm).toMatchObject({ resource: "https://mcp.example.com/mcp", authorization_servers: ["https://app.example.com"] });
+  });
+});
+
 describe("ChatGPT profile endpoint", () => {
   it("serves /chatgpt/mcp without refund-subscription, with its own protected resource metadata", async () => {
     const base = mcpUrl.replace("/mcp", "");

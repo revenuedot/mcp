@@ -24,6 +24,7 @@ ok(prm.resource === `${base}/mcp`, "protected resource metadata names this serve
 ok(prm.scopes_supported?.includes("project:support"), "scopes include project:support");
 const issuer = prm.authorization_servers?.[0];
 ok(!!issuer, `authorization server is ${issuer}`);
+ok(/app\.revenuedot\.app$/.test(new URL(issuer).host) || !/revenuedot\.app$/.test(new URL(base).host), "sign-in happens on the dashboard host, where the session cookie is");
 
 const meta = await (await fetch(`${issuer}/.well-known/oauth-authorization-server`)).json();
 ok(meta.code_challenge_methods_supported?.includes("S256"), "PKCE S256 supported");

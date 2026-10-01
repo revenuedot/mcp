@@ -14,6 +14,8 @@ export default defineConfig({
     env: {
       // The RevenueDot API, which is also the OAuth authorization server.
       REVENUEDOT_URL: bindings.text("https://api.revenuedot.app"),
+      // Where people sign in to connect: the dashboard host, which holds their session cookie (the API host does not), so they are not asked to sign in again.
+      REVENUEDOT_AUTH_URL: bindings.text("https://app.revenuedot.app"),
       // This server's public origin, used in the OAuth protected resource metadata.
       MCP_PUBLIC_URL: bindings.text("https://mcp.revenuedot.app"),
       // OpenAI's domain verification token for the ChatGPT plugin listing. It is served openly at /.well-known/openai-apps-challenge, so it is not a secret.

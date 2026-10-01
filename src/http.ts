@@ -7,6 +7,8 @@ import { createMcpServer, VERSION } from "./server.js";
 export interface HttpOptions {
   /** RevenueDot server; also the OAuth authorization server. */
   baseUrl?: string;
+  /** Where clients sign in: the origin that serves /oauth/* and the dashboard session. Defaults to baseUrl. On RevenueDot Cloud it is the dashboard (app.revenuedot.app), because the session cookie belongs to that host and not to the API host. */
+  authUrl?: string;
   /** This MCP server's public URL (without /mcp). Defaults to the request origin. */
   publicUrl?: string;
   /** A key used when a request has no Authorization header. Only for a local, single-user server. */
@@ -28,6 +30,7 @@ const VALID_FOR_MS = 60_000;
  */
 export function createHttpApp(opts: HttpOptions = {}) {
   const baseUrl = (opts.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "");
+  const authUrl = (opts.authUrl || baseUrl).replace(/\/+$/, "");
   const doFetch = opts.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const origin = (c: Context) => (opts.publicUrl?.replace(/\/+$/, "")) || (() => {
     const host = c.req.header("x-forwarded-host");
@@ -44,7 +47,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
 
   const metadata = (c: Context) => c.json({
     resource: `${origin(c)}${c.req.path.includes("/chatgpt/") ? "/chatgpt" : ""}/mcp`,
-    authorization_servers: [baseUrl],
+    authorization_servers: [authUrl],
     scopes_supported: SCOPES,
     bearer_methods_supported: ["header"],
     resource_name: "RevenueDot",
