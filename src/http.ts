@@ -23,7 +23,7 @@ const SCOPES = ["project:read", "project:write", "project:support"];
 const FIRST_SCOPES = ["project:read", "project:write"];
 const VALID_FOR_MS = 60_000;
 /** Tools the ChatGPT profile leaves out: refunds (money moves), and the app tools added after the ChatGPT submission's scan. */
-export const CHATGPT_EXCLUDED = ["refund-subscription", "create-app", "list-public-api-keys", "get-app-store-settings", "update-app"];
+export const CHATGPT_EXCLUDED = ["refund-subscription"];
 
 /**
  * Streamable HTTP endpoint at /mcp (stateless: a fresh server per request, JSON responses) plus OAuth protected resource
@@ -39,8 +39,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
     return host ? `${c.req.header("x-forwarded-proto") ?? "https"}://${host}` : new URL(c.req.url).origin;
   })();
   /** Endpoints: the full tool set (38) at /mcp and /claude/mcp (the Claude directory listing's URL), and the ChatGPT
-   * profile at /chatgpt/mcp (33), which has no refunds because OpenAI refuses plugins that move money. It also leaves out
-   * the four app tools added after OpenAI scanned the submitted set, until that set is resubmitted. */
+   * profile at /chatgpt/mcp (37), which has no refunds because OpenAI refuses plugins that move money. */
   const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": CHATGPT_EXCLUDED, "/claude/mcp": [] as string[] };
   // "/chatgpt" for /chatgpt/mcp and its metadata path, "" for /mcp.
   const prefix = (c: Context) => /\/(chatgpt|claude)\/mcp$/.exec(c.req.path)?.[0].slice(0, -4) ?? "";

@@ -22,12 +22,12 @@ describe("directory listing rules", () => {
     expect(checkListing(await listTools(), { count: 38 })).toEqual([]);
   });
 
-  it("the ChatGPT profile has the 33 tools OpenAI scanned (no refund, none of the app tools added since), and passes the same checks", async () => {
+  it("the ChatGPT profile has every tool but refund (37), and passes the same checks", async () => {
     const t = await listTools(CHATGPT_EXCLUDED);
-    expect(checkListing(t, { count: 33 })).toEqual([]);
+    expect(checkListing(t, { count: 37 })).toEqual([]);
     expect(t.map((x) => x.name)).not.toContain("refund-subscription");
     expect(t.map((x) => x.name)).toContain("cancel-subscription");
-    for (const n of ["create-app", "list-public-api-keys", "get-app-store-settings", "update-app"]) expect(t.map((x) => x.name)).not.toContain(n);
+    for (const n of ["create-app", "list-public-api-keys", "get-app-store-settings", "update-app"]) expect(t.map((x) => x.name)).toContain(n);
   });
 
   it("the checker catches the mistakes the directories reject", async () => {

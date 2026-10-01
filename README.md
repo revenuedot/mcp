@@ -10,7 +10,7 @@ The server has 38 tools to create apps and read their SDK keys and store notific
 
 ## Connect
 
-**Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`. `https://mcp.revenuedot.app/claude/mcp` (the Claude connector) serves the same 38 tools. `https://mcp.revenuedot.app/chatgpt/mcp` (the ChatGPT plugin) serves 33: it leaves out `refund-subscription`, because OpenAI does not list plugins that move money, and the four app tools added after its review (`create-app`, `list-public-api-keys`, `get-app-store-settings`, `update-app`).
+**Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`. `https://mcp.revenuedot.app/claude/mcp` (the Claude connector) serves the same 38 tools. `https://mcp.revenuedot.app/chatgpt/mcp` (the ChatGPT plugin) serves 37: it leaves out `refund-subscription`, because OpenAI does not list plugins that move money.
 
 **Local (stdio), for RevenueDot Cloud or your own server** (`REVENUEDOT_URL` defaults to `https://api.revenuedot.app`):
 
