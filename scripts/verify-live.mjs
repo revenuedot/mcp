@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // Checks a deployed MCP server the way the ChatGPT and Claude directories will: unauthenticated discovery, then (with a token) the tool list.
 //
-//   node scripts/verify-live.mjs [https://mcp.revenuedot.app] [--count 34]
+//   node scripts/verify-live.mjs [https://mcp.revenuedot.app] [--count 38]
 //   REVENUEDOT_MCP_TOKEN=sk_... node scripts/verify-live.mjs   # also lists tools with that token and runs the listing checks
 import { checkListing } from "./listing-checks.mjs";
 
 const args = process.argv.slice(2);
 const base = (args.find((a) => /^https?:\/\//.test(a)) ?? "https://mcp.revenuedot.app").replace(/\/+$/, "");
-const count = Number(args[args.indexOf("--count") + 1] || 34);
+const count = Number(args[args.indexOf("--count") + 1] || 38);
 const fails = [];
 const ok = (cond, msg) => { console.log(`${cond ? "ok  " : "FAIL"} ${msg}`); if (!cond) fails.push(msg); };
 

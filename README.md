@@ -4,13 +4,13 @@
 
 [![Watch the 87-second demo of RevenueDot in ChatGPT](https://revenuedot.app/videos/revenuedot-chatgpt-demo.webp)](https://revenuedot.app/videos/revenuedot-chatgpt-demo.mp4)
 
-The server has 34 tools to set up products, entitlements, offerings and packages, find customers and read their history, grant, extend, cancel or refund, add and debug webhooks, check store credentials, read revenue metrics and follow an import from RevenueCat. It is also the server behind the RevenueDot ChatGPT plugin and Claude connector (install: [`revenuedot/agent-skills`](https://github.com/revenuedot/agent-skills)). Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
+The server has 38 tools to create apps and read their SDK keys and store notification settings, set up products, entitlements, offerings and packages, find customers and read their history, grant, extend, cancel or refund, add and debug webhooks, check store credentials, read revenue metrics and follow an import from RevenueCat. It is also the server behind the RevenueDot ChatGPT plugin and Claude connector (install: [`revenuedot/agent-skills`](https://github.com/revenuedot/agent-skills)). Tool names match [RevenueCat's MCP tools](https://www.revenuecat.com/docs/tools/mcp/tools-reference) where the tool does the same thing, so prompts written for RevenueCat work here.
 
 > Status (2026-09-30): the hosted server is live at `https://mcp.revenuedot.app/mcp`, in front of RevenueDot Cloud (`https://api.revenuedot.app`). The local server is published on npm as [`@revenuedot/mcp`](https://www.npmjs.com/package/@revenuedot/mcp), so `npx -y @revenuedot/mcp` runs the latest release.
 
 ## Connect
 
-**Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`.
+**Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`. `https://mcp.revenuedot.app/claude/mcp` (the Claude connector) serves the same 38 tools. `https://mcp.revenuedot.app/chatgpt/mcp` (the ChatGPT plugin) serves 33: it leaves out `refund-subscription`, because OpenAI does not list plugins that move money, and the four app tools added after its review (`create-app`, `list-public-api-keys`, `get-app-store-settings`, `update-app`).
 
 **Local (stdio), for RevenueDot Cloud or your own server** (`REVENUEDOT_URL` defaults to `https://api.revenuedot.app`):
 
@@ -48,6 +48,8 @@ Every tool takes an optional `project_id`. Leave it out when the key or connecti
 |---|---|---|
 | `list-projects` | Projects this key or connection can use | `GET /v2/projects` |
 | `list-apps` | Apps, one per store | `GET /apps` |
+| `create-app` | Adds a Test Store, App Store (bundle id) or Google Play (package name) app; no credentials | `POST /apps` |
+| `list-public-api-keys` | The app's public SDK key (`appl_`, `goog_`, `test_`), which ships inside the app | `GET /apps/{id}/public_api_keys` |
 | `list-products` | Products, optionally for one app | `GET /products` |
 | `create-product` | Adds a store product to an app | `POST /products` |
 | `list-entitlements` | Entitlements with their products | `GET /entitlements` |
@@ -80,6 +82,8 @@ Every tool takes an optional `project_id`. Leave it out when the key or connecti
 | `send-test-webhook` | Sends a TEST event | `POST /integrations/webhooks/{id}/test` |
 | `delete-webhook-integration` | Deletes a webhook (destructive) | `DELETE /integrations/webhooks/{id}` |
 | `verify-store-credentials` | Calls Apple or Google with the saved key and reports whether it works | `POST /apps/{id}/actions/verify_credentials` |
+| `get-app-store-settings` | Notification URL for App Store Connect or Pub/Sub, forward URL, last notification and forward; credentials only as configured or not | `GET /apps/{id}/store_settings` |
+| `update-app` | Renames an app, sets or clears `notification_forward_url`, sets `track_new_purchases`; no credentials | `POST /apps/{id}` |
 
 No tool accepts a key, password or credential: store keys and webhook headers are entered in the dashboard. Creating a webhook returns its signing secret once.
 
@@ -87,8 +91,8 @@ No tool accepts a key, password or credential: store keys and webhook headers ar
 
 | Scope | Lets the assistant | Tools |
 |---|---|---|
-| `project:read` | Read everything | the 15 read-only tools |
-| `project:write` | Change the catalog, grant and revoke access, manage webhooks, delete customers | 15 tools (10 writes, 5 destructive) |
+| `project:read` | Read everything | the 17 read-only tools |
+| `project:write` | Create and update apps, change the catalog, grant and revoke access, manage webhooks, delete customers | 17 tools (12 writes, 5 destructive) |
 | `project:support` | Cancel, refund and extend subscriptions, make Test Store purchases. Asked for separately, only when a tool needs it | `extend-subscription`, `cancel-subscription`, `refund-subscription`, `create-test-purchase` |
 
 A tool that needs more than the connection has returns an error with `_meta["mcp/www_authenticate"]`, which ChatGPT and Claude use to ask you for the missing access. Every tool descriptor also carries `_meta.securitySchemes`.

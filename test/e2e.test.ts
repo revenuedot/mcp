@@ -35,12 +35,12 @@ async function connect(headers: Record<string, string>) {
 }
 
 describe("Streamable HTTP with a secret key", () => {
-  it("lists 34 tools with schemas, annotations and security schemes, and runs a setup through them", async () => {
+  it("lists 38 tools with schemas, annotations and security schemes, and runs a setup through them", async () => {
     const client = await connect({ Authorization: `Bearer ${rd.key}` });
     expect(client.getServerVersion()).toMatchObject({ name: "revenuedot" });
     expect(client.getInstructions()).toContain("RevenueDot");
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(34);
+    expect(tools).toHaveLength(38);
     const grant = tools.find((t) => t.name === "grant-customer-entitlement")!;
     expect(grant.inputSchema.required).toEqual(expect.arrayContaining(["customer_id", "entitlement_id", "expires_at"]));
     expect(grant.annotations).toMatchObject({ readOnlyHint: false, title: "Grant entitlement to customer" });
@@ -126,13 +126,14 @@ describe("sign-in host", () => {
 });
 
 describe("ChatGPT profile endpoint", () => {
-  it("serves /chatgpt/mcp without refund-subscription, with its own protected resource metadata", async () => {
+  it("serves /chatgpt/mcp without refund-subscription and the new app tools, with its own protected resource metadata", async () => {
     const base = mcpUrl.replace("/mcp", "");
     const client = new Client({ name: "e2e", version: "1.0.0" });
     await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/chatgpt/mcp`), { requestInit: { headers: { Authorization: `Bearer ${rd.key}` } } }));
     const names = (await client.listTools()).tools.map((t) => t.name);
     expect(names).toHaveLength(33);
     expect(names).not.toContain("refund-subscription");
+    for (const n of ["create-app", "list-public-api-keys", "get-app-store-settings", "update-app"]) expect(names).not.toContain(n);
     await client.close();
     const prm = await (await fetch(`${base}/.well-known/oauth-protected-resource/chatgpt/mcp`)).json();
     expect(prm).toMatchObject({ resource: `${base}/chatgpt/mcp`, authorization_servers: [rd.url] });
@@ -145,8 +146,9 @@ describe("ChatGPT profile endpoint", () => {
     const client = new Client({ name: "e2e", version: "1.0.0" });
     await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/claude/mcp`), { requestInit: { headers: { Authorization: `Bearer ${rd.key}` } } }));
     const names = (await client.listTools()).tools.map((t) => t.name);
-    expect(names).toHaveLength(34);
+    expect(names).toHaveLength(38);
     expect(names).toContain("refund-subscription");
+    expect(names).toEqual(expect.arrayContaining(["create-app", "list-public-api-keys", "get-app-store-settings", "update-app"]));
     await client.close();
     const prm = await (await fetch(`${base}/.well-known/oauth-protected-resource/claude/mcp`)).json();
     expect(prm).toMatchObject({ resource: `${base}/claude/mcp`, authorization_servers: [rd.url] });
@@ -190,7 +192,7 @@ describe("OAuth: discovery, dynamic registration, consent with the dashboard ses
 
     const connected = new Client({ name: "oauth-e2e", version: "1.0.0" });
     await connected.connect(new StreamableHTTPClientTransport(new URL(mcpUrl), { authProvider: provider }));
-    expect((await connected.listTools()).tools).toHaveLength(34);
+    expect((await connected.listTools()).tools).toHaveLength(38);
     const projects = text(await connected.callTool({ name: "list-projects", arguments: {} }));
     expect(projects.items.map((p: any) => p.id)).toEqual([rd.projectId]);
     const denied = await connected.callTool({ name: "list-apps", arguments: { project_id: other.projectId } }) as any;
@@ -257,7 +259,7 @@ describe("stdio (npx @revenuedot/mcp)", () => {
     });
     const client = new Client({ name: "stdio-e2e", version: "1.0.0" });
     await client.connect(transport);
-    expect((await client.listTools()).tools).toHaveLength(34);
+    expect((await client.listTools()).tools).toHaveLength(38);
     const apps = text(await client.callTool({ name: "list-apps", arguments: {} }));
     expect(apps.items).toHaveLength(2);
     await client.close();

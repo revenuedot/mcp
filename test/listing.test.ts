@@ -3,6 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createMcpServer } from "../src/server.js";
 import { tools } from "../src/tools.js";
+import { CHATGPT_EXCLUDED } from "../src/http.js";
 // @ts-expect-error plain JS shared with scripts/verify-live.mjs
 import { checkListing } from "../scripts/listing-checks.mjs";
 
@@ -17,15 +18,16 @@ async function listTools(exclude: string[] = []) {
 }
 
 describe("directory listing rules", () => {
-  it("passes every check for all 34 tools", async () => {
-    expect(checkListing(await listTools(), { count: 34 })).toEqual([]);
+  it("passes every check for all 38 tools", async () => {
+    expect(checkListing(await listTools(), { count: 38 })).toEqual([]);
   });
 
-  it("the ChatGPT profile has 33 tools and no refund, and passes the same checks", async () => {
-    const t = await listTools(["refund-subscription"]);
+  it("the ChatGPT profile has the 33 tools OpenAI scanned (no refund, none of the app tools added since), and passes the same checks", async () => {
+    const t = await listTools(CHATGPT_EXCLUDED);
     expect(checkListing(t, { count: 33 })).toEqual([]);
     expect(t.map((x) => x.name)).not.toContain("refund-subscription");
     expect(t.map((x) => x.name)).toContain("cancel-subscription");
+    for (const n of ["create-app", "list-public-api-keys", "get-app-store-settings", "update-app"]) expect(t.map((x) => x.name)).not.toContain(n);
   });
 
   it("the checker catches the mistakes the directories reject", async () => {

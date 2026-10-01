@@ -19,21 +19,21 @@ afterAll(async () => { await rd?.close(); });
 describe("tool catalog", () => {
   it("has RevenueCat's kebab-case names plus the RevenueDot-only ones, each with a description, schema and scopes", () => {
     expect(tools.map((t) => t.name)).toEqual([
-      "list-projects", "list-apps", "list-products", "create-product", "list-entitlements", "create-entitlement", "attach-products-to-entitlement",
+      "list-projects", "list-apps", "create-app", "list-public-api-keys", "list-products", "create-product", "list-entitlements", "create-entitlement", "attach-products-to-entitlement",
       "list-offerings", "create-offering", "create-packages", "attach-products-to-package", "get-customer", "grant-customer-entitlement",
       "revoke-customer-entitlement", "list-webhook-integrations", "create-webhook-integration", "get-import-status",
       "get-project-health", "get-metrics", "list-customers", "list-transactions", "list-events", "set-customer-attributes", "delete-customer",
       "extend-subscription", "cancel-subscription", "refund-subscription", "create-test-purchase", "archive-offering", "list-webhook-deliveries",
-      "retry-webhook-delivery", "send-test-webhook", "delete-webhook-integration", "verify-store-credentials",
+      "retry-webhook-delivery", "send-test-webhook", "delete-webhook-integration", "verify-store-credentials", "get-app-store-settings", "update-app",
     ]);
     const readOnly = tools.filter((t) => t.annotations.readOnlyHint).map((t) => t.name);
-    expect(readOnly).toHaveLength(15);
+    expect(readOnly).toHaveLength(17);
     expect(tools.filter((t) => t.annotations.destructiveHint).map((t) => t.name).sort()).toEqual(["archive-offering", "cancel-subscription", "delete-customer", "delete-webhook-integration", "refund-subscription", "revoke-customer-entitlement", "set-customer-attributes"]);
-    expect(tools).toHaveLength(34);
+    expect(tools).toHaveLength(38);
     // Tools that reach Apple, Google or the owner's own webhook URL are open world (OpenAI's scan checks this).
     expect(tools.filter((t) => t.annotations.openWorldHint).map((t) => t.name).sort()).toEqual([
       "archive-offering", "cancel-subscription", "create-offering", "create-test-purchase", "create-webhook-integration", "extend-subscription", "refund-subscription",
-      "retry-webhook-delivery", "send-test-webhook", "verify-store-credentials",
+      "retry-webhook-delivery", "send-test-webhook", "update-app", "verify-store-credentials",
     ]);
     for (const t of tools) {
       expect(t.name).toMatch(/^[a-z]+(-[a-z]+)+$/);
@@ -55,6 +55,27 @@ describe("tools against a live RevenueDot server", () => {
     const r = await run("list-apps");
     expect(r.items.map((a: any) => a.type).sort()).toEqual(["app_store", "test_store"]);
     expect((await run("list-apps", { project_id: rd.projectId })).items).toHaveLength(2);
+  });
+
+  it("create-app makes Test Store, App Store and Google Play apps, and asks for the store id; list-public-api-keys gives the SDK key", async () => {
+    const t = await run("create-app", { name: "Extra Test Store", type: "test_store" });
+    expect(t).toMatchObject({ object: "app", type: "test_store", name: "Extra Test Store" });
+    const ios = await run("create-app", { name: "Extra iOS", type: "app_store", bundle_id: "com.example.extra" });
+    expect(ios.app_store).toMatchObject({ bundle_id: "com.example.extra", subscription_key_configured: false });
+    const android = await run("create-app", { name: "Extra Android", type: "play_store", package_name: "com.example.extra" });
+    expect(android.play_store).toMatchObject({ package_name: "com.example.extra", play_service_account_credentials_configured: false });
+    await expect(run("create-app", { name: "No bundle", type: "app_store" })).rejects.toMatchObject({ status: 400, param: "bundle_id" });
+    await expect(run("create-app", { name: "No package", type: "play_store" })).rejects.toMatchObject({ status: 400, param: "package_name" });
+    await expect(run("create-app", { name: "Stripe", type: "stripe" })).rejects.toThrow();
+    const keys = await run("list-public-api-keys", { app_id: ios.id });
+    expect(keys.items).toHaveLength(1);
+    expect(keys.items[0]).toMatchObject({ object: "public_api_key", app_id: ios.id, environment: "production" });
+    expect(keys.items[0].key).toMatch(/^appl_/);
+    expect((await run("list-public-api-keys", { app_id: t.id })).items[0]).toMatchObject({ environment: "sandbox", key: expect.stringMatching(/^test_/) });
+    expect((await run("list-public-api-keys", { app_id: android.id })).items[0].key).toMatch(/^goog_/);
+    await expect(run("list-public-api-keys", { app_id: "app_nope" })).rejects.toMatchObject({ status: 404 });
+    // Remove them again so the rest of the suite sees the two apps it starts with.
+    for (const a of [t, ios, android]) await client.request("DELETE", `/v2/projects/${rd.projectId}/apps/${a.id}`);
   });
 
   it("create-product and list-products", async () => {
@@ -212,6 +233,41 @@ describe("support and operations tools against a live server", () => {
     const r = await run("verify-store-credentials", { app_id: rd.apps.ios });
     expect(r).toMatchObject({ object: "credentials_check", app_id: rd.apps.ios, valid: false });
     expect(typeof r.message).toBe("string");
+  });
+
+  it("get-app-store-settings shows the notification URL and only whether credentials are configured, never a credential", async () => {
+    // Store an App Store key the way the dashboard does, then check none of it comes back.
+    await client.request("POST", `/v2/projects/${rd.projectId}/apps/${rd.apps.ios}`, { body: { app_store: { subscription_private_key: "-----BEGIN PRIVATE KEY-----\nTOPSECRET\n-----END PRIVATE KEY-----", subscription_key_id: "KEYID12345", subscription_key_issuer: "issuer-uuid", shared_secret: "shared-secret-value" } } });
+    const s = await run("get-app-store-settings", { app_id: rd.apps.ios });
+    expect(s).toMatchObject({ object: "app_store_settings", app_id: rd.apps.ios, type: "app_store", notification_forward_url: null, track_new_purchases: false, last_forward: null });
+    expect(s.notification_url).toBe(`${rd.url}/v1/notifications/apple/${rd.apps.ios}`);
+    expect(s.credentials.subscription_key).toEqual({ configured: true });
+    expect(s.credentials.shared_secret).toEqual({ configured: true });
+    expect(s.credentials.play_service_account).toEqual({ configured: false });
+    const raw = JSON.stringify(s);
+    for (const secret of ["TOPSECRET", "KEYID12345", "issuer-uuid", "shared-secret-value"]) expect(raw).not.toContain(secret);
+    const test = await run("get-app-store-settings", { app_id: rd.apps.test });
+    expect(test).toMatchObject({ type: "test_store", notification_url: null });
+    // Clear the key again so verify-store-credentials sees an app without credentials.
+    await client.request("POST", `/v2/projects/${rd.projectId}/apps/${rd.apps.ios}`, { body: { app_store: { subscription_private_key: null, subscription_key_id: null, subscription_key_issuer: null, shared_secret: null } } });
+  });
+
+  it("update-app renames, sets and clears the forward URL, sets track_new_purchases, and has no place for a credential", async () => {
+    const t = tools.find((x) => x.name === "update-app")!;
+    expect(Object.keys(t.inputSchema).sort()).toEqual(["app_id", "name", "notification_forward_url", "project_id", "track_new_purchases"]);
+    const r = await run("update-app", { app_id: rd.apps.ios, name: "Scanner for iPhone", notification_forward_url: "https://api.revenuecat.com/v1/incoming-webhooks/apple-server-to-server-notification/abc", track_new_purchases: true });
+    expect(r).toMatchObject({ object: "app", id: rd.apps.ios, name: "Scanner for iPhone" });
+    expect(r.store_settings).toMatchObject({ notification_forward_url: "https://api.revenuecat.com/v1/incoming-webhooks/apple-server-to-server-notification/abc", track_new_purchases: true });
+    expect((await run("update-app", { app_id: rd.apps.ios, notification_forward_url: "" })).store_settings.notification_forward_url).toBeNull();
+    await run("update-app", { app_id: rd.apps.ios, notification_forward_url: "https://example.com/forward" });
+    expect((await run("update-app", { app_id: rd.apps.ios, notification_forward_url: null, track_new_purchases: false })).store_settings).toMatchObject({ notification_forward_url: null, track_new_purchases: false });
+    await expect(run("update-app", { app_id: rd.apps.ios, notification_forward_url: "ftp://nope" })).rejects.toMatchObject({ status: 400 });
+    await expect(run("update-app", { app_id: rd.apps.test, notification_forward_url: "https://example.com/forward" })).rejects.toMatchObject({ status: 400, param: "notification_forward_url" });
+    await expect(run("update-app", { app_id: rd.apps.ios })).rejects.toMatchObject({ status: 400 });
+    expect((await run("update-app", { app_id: rd.apps.test, name: "Test Store app" })).name).toBe("Test Store app");
+    // Unknown fields such as a private key are dropped by the schema, never sent to the API.
+    await run("update-app", { app_id: rd.apps.ios, name: "Scanner iOS", subscription_private_key: "nope" } as any);
+    expect((await run("get-app-store-settings", { app_id: rd.apps.ios })).credentials.subscription_key).toEqual({ configured: false });
   });
 
   it("webhooks: test event, delivery list, retry, delete", async () => {

@@ -53,6 +53,23 @@ async function entitlementId(c: RevenueDotClient, base: string, idOrKey: string)
   return list.items.find((e) => e.id === idOrKey || e.lookup_key === idOrKey)?.id ?? idOrKey;
 }
 
+/** Store types that send server notifications (and so have a forward URL and track_new_purchases). */
+const NOTIFYING_STORES = ["app_store", "mac_app_store", "play_store"];
+
+/** The app's store settings without any credential detail: only whether each credential is configured. */
+async function storeSettings(c: RevenueDotClient, base: string, appId: string) {
+  const s = await c.request<Record<string, any>>("GET", `${base}/apps/${enc(appId)}/store_settings`);
+  const configured = Object.fromEntries(Object.entries(s.credentials ?? {}).map(([k, v]) => [k, { configured: (v as { configured?: unknown })?.configured === true }]));
+  return {
+    object: s.object, app_id: s.app_id, type: s.type, api_origin: s.api_origin,
+    notification_url: s.notification_url, notification_forward_url: s.notification_forward_url,
+    notification_status: s.notification_status, last_notification_at: s.last_notification_at,
+    last_notification_received_at: s.last_notification_received_at, last_notification_error: s.last_notification_error,
+    last_forward: s.last_forward, track_new_purchases: s.track_new_purchases, allow_unsigned_receipts: s.allow_unsigned_receipts,
+    credentials: configured,
+  };
+}
+
 /** Timestamps: milliseconds since epoch, an ISO 8601 date, or a duration from now such as "30d", "12h", "1y". */
 export function toEpochMs(v: number | string, now = Date.now()): number {
   if (typeof v === "number") return v < 1e11 ? v * 1000 : v;
@@ -82,6 +99,31 @@ export const tools: ToolDefinition[] = [
     description: "Lists the project's apps (one per store: app_store, play_store, test_store, stripe ...), with their ids. Product creation needs an app id.",
     inputSchema: { project_id: projectId, limit, starting_after: startingAfter }, annotations: READ, scopes: ["project_configuration:apps:read"],
     run: async (c, a) => c.request("GET", `${await P(c, a.project_id)}/apps`, { query: { limit: a.limit ?? 100, starting_after: a.starting_after } }),
+  }),
+  define({
+    name: "create-app", title: "Create app",
+    description: "Creates an app in the project: test_store (simulated purchases, no store account needed), app_store with its bundle_id, or play_store with its package_name. Store credentials are not set here: the user adds them in the dashboard. Then call list-public-api-keys for the key the SDK uses.",
+    inputSchema: {
+      project_id: projectId,
+      name: z.string().trim().min(1).max(255).describe("Name shown in the dashboard, e.g. Scanner iOS."),
+      type: z.enum(["test_store", "app_store", "play_store"]).describe("The store: test_store, app_store (iOS) or play_store (Android)."),
+      bundle_id: z.string().min(1).optional().describe("The iOS bundle id, e.g. com.example.app. Required for app_store."),
+      package_name: z.string().min(1).optional().describe("The Android package name, e.g. com.example.app. Required for play_store."),
+    },
+    annotations: CREATE, scopes: ["project_configuration:apps:read_write"],
+    run: async (c, a) => {
+      const need = a.type === "app_store" ? "bundle_id" : a.type === "play_store" ? "package_name" : null;
+      if (need && !a[need]) throw new RevenueDotApiError(400, "parameter_error", `${need} is required for ${a.type} apps.`, need);
+      const details = a.type === "app_store" ? { app_store: { bundle_id: a.bundle_id } } : a.type === "play_store" ? { play_store: { package_name: a.package_name } } : {};
+      return c.request("POST", `${await P(c, a.project_id)}/apps`, { body: { name: a.name, type: a.type, ...details } });
+    },
+  }),
+  define({
+    name: "list-public-api-keys", title: "List public SDK keys",
+    description: "Lists an app's public SDK key (appl_..., goog_..., test_...), the key the RevenueCat SDK is configured with in the app. It is public and ships inside the app; it is not a secret key and cannot change anything.",
+    inputSchema: { project_id: projectId, app_id: z.string().describe("The app (see list-apps).") },
+    annotations: READ, scopes: ["project_configuration:apps:read"],
+    run: async (c, a) => c.request("GET", `${await P(c, a.project_id)}/apps/${enc(a.app_id)}/public_api_keys`),
   }),
   define({
     name: "list-products", title: "List products",
@@ -402,6 +444,35 @@ export const tools: ToolDefinition[] = [
     inputSchema: { project_id: projectId, app_id: z.string().describe("The app to check (see list-apps).") },
     annotations: { ...READ, openWorldHint: true }, scopes: ["project_configuration:apps:read"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/apps/${enc(a.app_id)}/actions/verify_credentials`, { body: {} }),
+  }),
+  define({
+    name: "get-app-store-settings", title: "Get app store settings",
+    description: "An app's store notification setup: notification_url (paste it into App Store Connect or the Google Play Pub/Sub push subscription), notification_forward_url, when the last notification arrived and whether it was processed, the last forward, and track_new_purchases. Credentials show only whether each one is configured.",
+    inputSchema: { project_id: projectId, app_id: z.string().describe("The app (see list-apps).") },
+    annotations: READ, scopes: ["project_configuration:apps:read"],
+    run: async (c, a) => storeSettings(c, await P(c, a.project_id), a.app_id),
+  }),
+  define({
+    name: "update-app", title: "Update app",
+    description: "Changes an app's name and, for App Store and Google Play apps, notification_forward_url (store notifications are copied there, e.g. to RevenueCat during a migration; an empty string or null turns forwarding off) and track_new_purchases (record purchases the SDK never reported). Store credentials are not changed here: the user enters them in the dashboard.",
+    inputSchema: {
+      project_id: projectId, app_id: z.string().describe("The app to change (see list-apps)."),
+      name: z.string().trim().min(1).max(255).optional().describe("New name shown in the dashboard."),
+      notification_forward_url: z.string().max(2048).nullable().optional().describe("https URL that receives a copy of every store notification; empty string or null turns forwarding off. App Store and Google Play apps only."),
+      track_new_purchases: z.boolean().optional().describe("Create customers for store purchases the SDK has not reported yet. App Store and Google Play apps only."),
+    },
+    annotations: { ...ATTACH, openWorldHint: true }, scopes: ["project_configuration:apps:read_write"],
+    run: async (c, a) => {
+      const base = await P(c, a.project_id);
+      const app = await c.request<{ type: string }>("GET", `${base}/apps/${enc(a.app_id)}`);
+      const store: Record<string, unknown> = {};
+      if (a.notification_forward_url !== undefined) store.notification_forward_url = a.notification_forward_url;
+      if (a.track_new_purchases !== undefined) store.track_new_purchases = a.track_new_purchases;
+      if (Object.keys(store).length && !NOTIFYING_STORES.includes(app.type)) throw new RevenueDotApiError(400, "parameter_error", `${app.type} apps have no store notifications; only name can be changed.`, Object.keys(store)[0]);
+      if (a.name === undefined && !Object.keys(store).length) throw new RevenueDotApiError(400, "parameter_error", "Send at least one of name, notification_forward_url and track_new_purchases.", "name");
+      const updated = await c.request<Record<string, unknown>>("POST", `${base}/apps/${enc(a.app_id)}`, { body: { name: a.name, ...(Object.keys(store).length ? { [app.type]: store } : {}) } });
+      return { ...updated, store_settings: await storeSettings(c, base, a.app_id) };
+    },
   }),
 ];
 
