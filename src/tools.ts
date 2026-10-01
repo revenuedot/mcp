@@ -33,6 +33,9 @@ const define = <S extends z.ZodRawShape>(t: ToolDefinition<S>) => t as unknown a
 const READ: ToolAnnotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const CREATE: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
 const DESTROY: ToolAnnotations = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false };
+const DESTROY_OPEN: ToolAnnotations = { ...DESTROY, openWorldHint: true };
+// The tools below reach a system RevenueDot does not control (Apple, Google, or the owner's own webhook URL), so they are open world.
+const CREATE_OPEN: ToolAnnotations = { ...CREATE, openWorldHint: true };
 const ATTACH: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 const projectId = z.string().optional().describe("RevenueDot project id (proj...). Optional when the key or account has exactly one project.");
@@ -141,7 +144,7 @@ export const tools: ToolDefinition[] = [
       is_current: z.boolean().optional().describe("Serve this offering to apps by default."),
       metadata: z.record(z.string(), z.unknown()).optional().describe("Free-form JSON the app can read (paywall copy, colors ...)."),
     },
-    annotations: CREATE, scopes: ["project_configuration:offerings:read_write"],
+    annotations: CREATE_OPEN, scopes: ["project_configuration:offerings:read_write"],
     run: async (c, a) => {
       const base = await P(c, a.project_id);
       const o = await c.request<{ id: string; is_current: boolean }>("POST", `${base}/offerings`, { body: { lookup_key: a.lookup_key, display_name: a.display_name, metadata: a.metadata } });
@@ -237,7 +240,7 @@ export const tools: ToolDefinition[] = [
       event_types: z.array(z.string()).optional().describe("Only these event types, lower case (initial_purchase, renewal ...). Default: all."),
       app_id: z.string().optional().describe("Only events from this app."),
     },
-    annotations: CREATE, scopes: ["project_configuration:integrations:read_write"],
+    annotations: CREATE_OPEN, scopes: ["project_configuration:integrations:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/integrations/webhooks`, {
       body: { name: a.name, url: a.url, environment: a.environment, event_types: a.event_types, app_id: a.app_id },
     }),
@@ -302,7 +305,7 @@ export const tools: ToolDefinition[] = [
       project_id: projectId, customer_id: customerArg,
       attributes: z.array(z.object({ name: z.string().min(1).max(500), value: z.string().nullable() })).min(1).max(50).describe("Name and value pairs; a null value deletes the attribute."),
     },
-    annotations: ATTACH, scopes: ["customer_information:customers:read_write"],
+    annotations: { ...ATTACH, destructiveHint: true }, scopes: ["customer_information:customers:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/customers/${enc(a.customer_id)}/attributes`, { body: { attributes: a.attributes } }),
   }),
   define({
@@ -321,7 +324,7 @@ export const tools: ToolDefinition[] = [
       extend_until: z.union([z.number(), z.string()]).optional().describe("New end of access: milliseconds since epoch or an ISO 8601 date. Use this or extend_by_days."),
       reason: z.enum(["undeclared", "customer_satisfaction", "other", "service_issue_or_outage"]).optional().describe("Required by Apple."),
     },
-    annotations: CREATE, scopes: ["customer_information:subscriptions:read_write"],
+    annotations: CREATE_OPEN, scopes: ["customer_information:subscriptions:read_write"],
     run: async (c, a) => {
       if ((a.extend_by_days === undefined) === (a.extend_until === undefined)) throw new RevenueDotApiError(400, "parameter_error", "Send exactly one of extend_by_days and extend_until.", "extend_by_days");
       const body = a.extend_by_days !== undefined
@@ -334,14 +337,14 @@ export const tools: ToolDefinition[] = [
     name: "cancel-subscription", title: "Cancel subscription",
     description: "Cancels a subscription at the end of the paid period (the customer keeps access until then). Works where the store lets a server cancel (Google Play); others answer with an error that says so. Ask the user to confirm first.",
     inputSchema: { project_id: projectId, subscription_id: z.string().min(1).describe("Subscription id from get-customer.") },
-    annotations: DESTROY, scopes: ["customer_information:subscriptions:read_write"],
+    annotations: DESTROY_OPEN, scopes: ["customer_information:subscriptions:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/subscriptions/${enc(a.subscription_id)}/actions/cancel`),
   }),
   define({
     name: "refund-subscription", title: "Refund subscription",
     description: "Refunds the latest charge and ends access immediately. Works where the store lets a server refund (Google Play); others answer with an error that says so. Money moves: only call it after the user said yes to this exact customer and amount.",
     inputSchema: { project_id: projectId, subscription_id: z.string().min(1).describe("Subscription id from get-customer.") },
-    annotations: DESTROY, scopes: ["customer_information:subscriptions:read_write"],
+    annotations: DESTROY_OPEN, scopes: ["customer_information:subscriptions:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/subscriptions/${enc(a.subscription_id)}/actions/refund`),
   }),
   define({
@@ -352,7 +355,7 @@ export const tools: ToolDefinition[] = [
       scenario: z.enum(["purchase", "trial", "trial_conversion", "renewal", "cancel", "billing_issue", "refund", "expire"]).optional().describe("Lifecycle to simulate (default purchase)."),
       offset_days: z.number().min(0).max(730).optional().describe("How many days ago it started."),
     },
-    annotations: CREATE, scopes: ["customer_information:purchases:read_write"],
+    annotations: CREATE_OPEN, scopes: ["customer_information:purchases:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/test_purchases`, { body: { app_user_id: a.app_user_id, product_id: a.product_id, scenario: a.scenario, offset_days: a.offset_days } }),
   }),
   define({
@@ -376,14 +379,14 @@ export const tools: ToolDefinition[] = [
     name: "retry-webhook-delivery", title: "Retry webhook delivery",
     description: "Sends a failed or pending webhook delivery again now.",
     inputSchema: { project_id: projectId, webhook_id: z.string().describe("Webhook integration id."), delivery_id: z.string().describe("Delivery id from list-webhook-deliveries.") },
-    annotations: ATTACH, scopes: ["project_configuration:integrations:read_write"],
+    annotations: { ...ATTACH, openWorldHint: true }, scopes: ["project_configuration:integrations:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/webhooks/${enc(a.webhook_id)}/deliveries/${enc(a.delivery_id)}/retry`),
   }),
   define({
     name: "send-test-webhook", title: "Send test webhook",
     description: "Sends a TEST event to a webhook integration so the user can see it arrive. The webhook must be enabled.",
     inputSchema: { project_id: projectId, webhook_id: z.string().describe("Webhook integration id.") },
-    annotations: CREATE, scopes: ["project_configuration:integrations:read_write"],
+    annotations: CREATE_OPEN, scopes: ["project_configuration:integrations:read_write"],
     run: async (c, a) => c.request("POST", `${await P(c, a.project_id)}/integrations/webhooks/${enc(a.webhook_id)}/test`),
   }),
   define({

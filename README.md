@@ -66,7 +66,7 @@ Every tool takes an optional `project_id`. Leave it out when the key or connecti
 | `list-customers` | Newest first, or search by app user id, email or transaction id | `GET /customers` |
 | `list-transactions` | Purchases, renewals, trials and refunds | `GET /transactions` |
 | `list-events` | The event log (the events webhooks send), by customer, type or environment | `GET /events` |
-| `set-customer-attributes` | Sets or deletes attributes | `POST /customers/{id}/attributes` |
+| `set-customer-attributes` | Sets or deletes attributes (destructive: it overwrites) | `POST /customers/{id}/attributes` |
 | `delete-customer` | Deletes a customer's data (destructive) | `DELETE /customers/{id}` |
 | `extend-subscription` | Free days, or until a date | `POST /subscriptions/{id}/actions/extend` |
 | `cancel-subscription` | Cancels at period end (destructive) | `POST /subscriptions/{id}/actions/cancel` |
@@ -86,7 +86,7 @@ No tool accepts a key, password or credential: store keys and webhook headers ar
 | Scope | Lets the assistant | Tools |
 |---|---|---|
 | `project:read` | Read everything | the 15 read-only tools |
-| `project:write` | Change the catalog, grant and revoke access, manage webhooks, delete customers | 15 tools (11 writes, 4 destructive) |
+| `project:write` | Change the catalog, grant and revoke access, manage webhooks, delete customers | 15 tools (10 writes, 5 destructive) |
 | `project:support` | Cancel, refund and extend subscriptions, make Test Store purchases. Asked for separately, only when a tool needs it | `extend-subscription`, `cancel-subscription`, `refund-subscription`, `create-test-purchase` |
 
 A tool that needs more than the connection has returns an error with `_meta["mcp/www_authenticate"]`, which ChatGPT and Claude use to ask you for the missing access. Every tool descriptor also carries `_meta.securitySchemes`.
