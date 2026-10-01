@@ -36,9 +36,12 @@ export function createHttpApp(opts: HttpOptions = {}) {
     const host = c.req.header("x-forwarded-host");
     return host ? `${c.req.header("x-forwarded-proto") ?? "https"}://${host}` : new URL(c.req.url).origin;
   })();
-  /** Endpoints: the full tool set at /mcp, and the ChatGPT profile at /chatgpt/mcp (OpenAI bans plugins that move money, so no refunds there). */
-  const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": ["refund-subscription"] };
-  const prmUrl = (c: Context) => `${origin(c)}/.well-known/oauth-protected-resource${c.req.path.startsWith("/chatgpt/") ? "/chatgpt" : ""}/mcp`;
+  /** Endpoints: the full tool set at /mcp, and the directory profiles at /chatgpt/mcp and /claude/mcp. OpenAI and
+   * Anthropic both refuse listings that move money, so those two have no refunds. */
+  const PROFILES = { "/mcp": [] as string[], "/chatgpt/mcp": ["refund-subscription"], "/claude/mcp": ["refund-subscription"] };
+  // "/chatgpt" for /chatgpt/mcp and its metadata path, "" for /mcp.
+  const prefix = (c: Context) => /\/(chatgpt|claude)\/mcp$/.exec(c.req.path)?.[0].slice(0, -4) ?? "";
+  const prmUrl = (c: Context) => `${origin(c)}/.well-known/oauth-protected-resource${prefix(c)}/mcp`;
   // Tokens the API recently accepted (per process or Worker isolate), so each MCP message costs one API call, not two.
   const valid = new Map<string, number>();
 
@@ -46,7 +49,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
   app.use("*", cors({ origin: "*", allowHeaders: ["*"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"], exposeHeaders: ["mcp-session-id", "mcp-protocol-version", "www-authenticate"] }));
 
   const metadata = (c: Context) => c.json({
-    resource: `${origin(c)}${c.req.path.includes("/chatgpt/") ? "/chatgpt" : ""}/mcp`,
+    resource: `${origin(c)}${prefix(c)}/mcp`,
     authorization_servers: [authUrl],
     scopes_supported: SCOPES,
     bearer_methods_supported: ["header"],
@@ -56,6 +59,7 @@ export function createHttpApp(opts: HttpOptions = {}) {
   app.get("/.well-known/oauth-protected-resource", metadata);
   app.get("/.well-known/oauth-protected-resource/mcp", metadata);
   app.get("/.well-known/oauth-protected-resource/chatgpt/mcp", metadata);
+  app.get("/.well-known/oauth-protected-resource/claude/mcp", metadata);
   app.get("/", (c) => c.json({ name: "RevenueDot MCP", version: VERSION, mcp: `${origin(c)}/mcp`, api: baseUrl }));
   app.get("/.well-known/openai-apps-challenge", (c) => (opts.openaiAppsChallenge ? c.text(opts.openaiAppsChallenge.trim()) : c.notFound()));
   app.get("/health", (c) => c.json({ status: "ok" }));

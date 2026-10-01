@@ -140,6 +140,20 @@ describe("ChatGPT profile endpoint", () => {
     expect(none.status).toBe(401);
     expect(none.headers.get("www-authenticate")).toContain(`resource_metadata="${base}/.well-known/oauth-protected-resource/chatgpt/mcp"`);
   });
+  it("serves /claude/mcp without refund-subscription, with its own protected resource metadata", async () => {
+    const base = mcpUrl.replace("/mcp", "");
+    const client = new Client({ name: "e2e", version: "1.0.0" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/claude/mcp`), { requestInit: { headers: { Authorization: `Bearer ${rd.key}` } } }));
+    const names = (await client.listTools()).tools.map((t) => t.name);
+    expect(names).toHaveLength(33);
+    expect(names).not.toContain("refund-subscription");
+    await client.close();
+    const prm = await (await fetch(`${base}/.well-known/oauth-protected-resource/claude/mcp`)).json();
+    expect(prm).toMatchObject({ resource: `${base}/claude/mcp`, authorization_servers: [rd.url] });
+    const none = await fetch(`${base}/claude/mcp`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    expect(none.status).toBe(401);
+    expect(none.headers.get("www-authenticate")).toContain(`resource_metadata="${base}/.well-known/oauth-protected-resource/claude/mcp"`);
+  });
 });
 
 describe("OAuth: discovery, dynamic registration, consent with the dashboard session, PKCE, then tools on one project", () => {
@@ -209,7 +223,7 @@ describe("OAuth step-up: the money-actions scope", () => {
       const html = await (await fetch(url, { headers: { cookie: rd.cookie } })).text();
       expect(html).toContain("Money actions");
       // A first connection does not pre-tick it (the 401 asks for read and write only); the user ticks it here.
-      expect(html).toMatch(/name="support" value="1">/);
+      expect(html).toMatch(/name="support" value="1"(?![^>]*checked)[^>]*>/);
       const fields = Object.fromEntries([...html.matchAll(/<input type="hidden" name="([^"]+)" value="([^"]*)">/g)].map((m) => [m[1]!, m[2]!.replace(/&amp;/g, "&")]));
       const res = await fetch(new URL("/oauth/authorize", url), {
         method: "POST", redirect: "manual", headers: { cookie: rd.cookie, "content-type": "application/x-www-form-urlencoded" },
