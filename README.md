@@ -128,6 +128,14 @@ const client = createClient({ baseUrl: "https://api.revenuedot.app", apiKey: pro
 await runTool(client, "grant-customer-entitlement", { customer_id: "user_42", entitlement_id: "pro", expires_at: "30d" });
 ```
 
+## Use with your coding agent
+
+Coding agents can read this repository on demand, so they use the right package, imports and API:
+
+- **Context7:** https://context7.com/revenuedot/mcp
+- **DeepWiki:** https://deepwiki.com/revenuedot/mcp
+- **GitMCP:** https://gitmcp.io/revenuedot/mcp
+
 ## Develop
 
 ```bash
