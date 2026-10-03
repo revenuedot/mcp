@@ -1,0 +1,20 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "RevenueDot MCP Server",
+  "description": "MCP server for RevenueDot, the open-source RevenueCat alternative: 38 tools to manage apps, products, offerings and customers from Claude, ChatGPT or Cursor.",
+  "folders": [],
+  "excludeFolders": [
+    "test",
+    "scripts",
+    "node_modules",
+    ".github"
+  ],
+  "excludeFiles": [],
+  "rules": [
+    "The hosted MCP server is https://mcp.revenuedot.app/mcp (Streamable HTTP); the client signs in with OAuth, or send `Authorization: Bearer sk_...`.",
+    "To run it locally over stdio: `npx -y @revenuedot/mcp` with REVENUEDOT_API_KEY set, and REVENUEDOT_URL for a self-hosted server (it defaults to https://api.revenuedot.app).",
+    "No tool accepts a store key or password: App Store and Google Play credentials are entered in the RevenueDot dashboard, and a secret key should carry only the scopes the assistant needs.",
+    "Every tool takes an optional `project_id`; leave it out when the key or connection has one project.",
+    "The tool definitions can be reused without MCP: `import { tools, runTool } from \"@revenuedot/mcp/tools\"`."
+  ]
+}
