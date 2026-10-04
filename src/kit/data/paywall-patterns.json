@@ -1,0 +1,453 @@
+{
+  "version": "0.1.0",
+  "patterns": [
+    {
+      "id": "annual-first",
+      "name": "Annual first",
+      "summary": "Benefits, then the yearly and monthly plans, with the yearly plan selected and a savings badge.",
+      "structure": [
+        "Headline stating the outcome",
+        "3 to 5 benefit lines",
+        "Yearly plan card, pre-selected, with the monthly equivalent and a savings badge",
+        "Monthly plan card",
+        "One purchase button",
+        "Restore, Terms and Privacy links"
+      ],
+      "whenItWorks": "Apps with steady, repeated use where a year of value is believable; when you want a longer commitment from the first purchase.",
+      "whenToAvoid": "Apps with seasonal or one-off use, or when a yearly price is a shock for your audience and monthly is the real entry point.",
+      "rules": [
+        "Show the real billing period and total price of the selected plan.",
+        "The savings badge must be computed from the two real prices."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "App Review Guidelines, section 3.1.2",
+        "url": "https://developer.apple.com/app-store/review/guidelines/",
+        "publisher": "Apple"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it.",
+      "related": [
+        {
+          "title": "RevenueDot: paywalls",
+          "url": "https://revenuedot.app/docs/guides/paywalls",
+          "publisher": "RevenueDot docs"
+        }
+      ]
+    },
+    {
+      "id": "trial-timeline",
+      "name": "Trial timeline",
+      "summary": "Explains a free trial day by day, then asks for the purchase.",
+      "structure": [
+        "Headline naming the trial length",
+        "Timeline: today, a reminder day, the day the charge starts",
+        "Plan and price after the trial",
+        "Button labelled with the trial",
+        "Cancel-anytime note that matches the store's rules"
+      ],
+      "whenItWorks": "Apps where the customer fears a surprise charge; apps whose value shows up within the trial.",
+      "whenToAvoid": "Apps without a trial, or where the trial cannot be cancelled easily in the store.",
+      "rules": [
+        "Apple 3.1.2(a): state the trial duration, what ends with it and the charge that follows, before it starts.",
+        "Show the trial only to customers eligible for the introductory offer."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. Check eligibility before showing the trial (see eligibility-aware-cta).",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. Check eligibility before showing the trial (see eligibility-aware-cta).",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. Check eligibility before showing the trial (see eligibility-aware-cta).",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. Check eligibility before showing the trial (see eligibility-aware-cta)."
+      },
+      "guidelineIds": [
+        "apple-3-1-2a-trial-disclosure",
+        "apple-intro-offers-one-per-group"
+      ],
+      "source": {
+        "title": "App Review Guidelines, section 3.1.2",
+        "url": "https://developer.apple.com/app-store/review/guidelines/",
+        "publisher": "Apple"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it.",
+      "related": [
+        {
+          "title": "RevenueDot: paywalls",
+          "url": "https://revenuedot.app/docs/guides/paywalls",
+          "publisher": "RevenueDot docs"
+        }
+      ]
+    },
+    {
+      "id": "minimal-two-plan",
+      "name": "Minimal two-plan",
+      "summary": "A headline, two plans and one button.",
+      "structure": [
+        "One-line headline",
+        "Monthly and yearly plan rows with plain names",
+        "One purchase button",
+        "Restore, Terms, Privacy"
+      ],
+      "whenItWorks": "A first version, or an app whose value needs no explaining; the baseline to test every other pattern against.",
+      "whenToAvoid": "Apps with several tiers or a complex offer that needs explanation.",
+      "rules": [
+        "Name plans by period (Monthly, Yearly), not by marketing labels.",
+        "Show price and period in the same line."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription",
+        "apple-3-1-1-iap-and-restore"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "feature-hero",
+      "name": "Feature hero",
+      "summary": "A large image or video of the product's best moment, five benefits with icons, plans side by side.",
+      "structure": [
+        "Full-width hero image",
+        "Headline",
+        "Up to 5 benefit rows with icons",
+        "Plan cards",
+        "Purchase button"
+      ],
+      "whenItWorks": "Visual products (photo, video, design, fitness) where seeing the result sells.",
+      "whenToAvoid": "Small screens with large text sizes where the hero pushes the price below the fold.",
+      "rules": [
+        "Keep the price and button visible without scrolling at the largest text size you support.",
+        "Give the hero an accessibility label or mark it decorative."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "free-vs-pro",
+      "name": "Free versus Pro",
+      "summary": "A short comparison of what the free plan and the paid plan include, then the plans.",
+      "structure": [
+        "Headline",
+        "Two-column list of 4 to 6 rows (check or dash)",
+        "Plan cards",
+        "Purchase button"
+      ],
+      "whenItWorks": "Freemium apps where customers need to see exactly what paying adds.",
+      "whenToAvoid": "Long feature lists: keep it to the few rows that matter.",
+      "rules": [
+        "Do not hide limits of the paid plan in small print.",
+        "Use text and symbols, not colour alone, to show included or not."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "story-pages",
+      "name": "Story pages",
+      "summary": "Two or three swipeable value screens before the plans.",
+      "structure": [
+        "Page 1: the problem solved",
+        "Page 2: how the app solves it",
+        "Page 3: plans and the purchase button",
+        "Page dots and a visible close control"
+      ],
+      "whenItWorks": "Apps with a story to tell and a new audience that does not know the product yet.",
+      "whenToAvoid": "Returning users, who should see the plans at once.",
+      "rules": [
+        "Every page needs a way to close or skip.",
+        "Keep the purchase button reachable on the last page without extra gestures."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "tiers",
+      "name": "Tiers",
+      "summary": "Two tiers in tabs (for example Plus and Pro), each with its own plans.",
+      "structure": [
+        "Tier tabs",
+        "Benefits of the selected tier",
+        "That tier's monthly and yearly plans",
+        "Purchase button"
+      ],
+      "whenItWorks": "Apps with a real step up in value, such as team or professional features.",
+      "whenToAvoid": "Apps with one product. Extra tiers add choice work without adding value.",
+      "rules": [
+        "Make the difference between tiers explicit.",
+        "Put plans in the same subscription group so an upgrade replaces the old plan."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "social-proof",
+      "name": "Social proof",
+      "summary": "A rating, a user count and one real review above the plans.",
+      "structure": [
+        "Rating and count",
+        "One genuine review with first name or handle",
+        "Plan cards",
+        "Purchase button"
+      ],
+      "whenItWorks": "Apps with real ratings and many users.",
+      "whenToAvoid": "New apps with little proof. Never invent a rating, count or review.",
+      "rules": [
+        "Use only real, current figures and real reviews."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "apple-3-1-2c-describe-subscription"
+      ],
+      "source": {
+        "title": "RevenueDot: paywalls",
+        "url": "https://revenuedot.app/docs/guides/paywalls",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    },
+    {
+      "id": "eligibility-aware-cta",
+      "name": "Eligibility-aware button",
+      "summary": "The button says 'Start free trial' only for customers who can still use the trial; others see the plain purchase wording.",
+      "structure": [
+        "Eligibility check on load",
+        "Trial wording for eligible customers",
+        "Plain price wording for the rest",
+        "Same layout for both"
+      ],
+      "whenItWorks": "Any app that offers an introductory offer: Apple allows one introductory offer per subscription group per customer.",
+      "whenToAvoid": "Apps without introductory offers.",
+      "rules": [
+        "Do not promise a trial to a customer who is not eligible.",
+        "Keep the plans in one subscription group."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. Intro eligibility comes from the SDK or StoreKit; render both wordings from the same layout.",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. Intro eligibility comes from the SDK or StoreKit; render both wordings from the same layout.",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. Intro eligibility comes from the SDK or StoreKit; render both wordings from the same layout.",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. Intro eligibility comes from the SDK or StoreKit; render both wordings from the same layout."
+      },
+      "guidelineIds": [
+        "apple-intro-offers-one-per-group",
+        "apple-3-1-2a-trial-disclosure"
+      ],
+      "source": {
+        "title": "Set up introductory offers for auto-renewable subscriptions",
+        "url": "https://developer.apple.com/help/app-store-connect/manage-subscriptions/set-up-introductory-offers-for-auto-renewable-subscriptions",
+        "publisher": "Apple"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it.",
+      "related": [
+        {
+          "title": "RevenueDot: paywalls",
+          "url": "https://revenuedot.app/docs/guides/paywalls",
+          "publisher": "RevenueDot docs"
+        }
+      ]
+    },
+    {
+      "id": "winback-offer",
+      "name": "Win-back offer",
+      "summary": "A discounted or free period shown to a lapsed subscriber when they return.",
+      "structure": [
+        "Welcome-back headline",
+        "The offer and its price after the offer period",
+        "Button",
+        "Normal plans below"
+      ],
+      "whenItWorks": "Subscribers who cancelled and came back; both stores have win-back offers for lapsed subscribers.",
+      "whenToAvoid": "Customers who are still subscribed, and apps that have not set up an offer in the store.",
+      "rules": [
+        "Create the offer in the store first; the app only displays what the store says the customer is eligible for."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "google-payments-policy"
+      ],
+      "source": {
+        "title": "Google Play subscriptions overview (offers and win-back)",
+        "url": "https://developer.android.com/google/play/billing/subscriptions",
+        "publisher": "Android Developers"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it.",
+      "related": [
+        {
+          "title": "RevenueDot: win-back offers",
+          "url": "https://revenuedot.app/docs/guides/win-back-offers",
+          "publisher": "RevenueDot docs"
+        }
+      ]
+    },
+    {
+      "id": "billing-issue-banner",
+      "name": "Billing-issue banner",
+      "summary": "A banner, not a paywall, that tells a subscriber their payment failed and links to the store's fix.",
+      "structure": [
+        "Banner at the top of the main screen",
+        "Plain text: the payment failed",
+        "Button opening the store's subscription settings",
+        "Access kept during the grace period"
+      ],
+      "whenItWorks": "Every subscription app: the store retries failed renewals for days, and many customers never notice.",
+      "whenToAvoid": "Never remove access that the store still treats as active.",
+      "rules": [
+        "During a grace period the customer keeps access; Google's policy says not to remove access to content a user is entitled to."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. ",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. ",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. ",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. "
+      },
+      "guidelineIds": [
+        "google-payments-policy"
+      ],
+      "source": {
+        "title": "Subscription lifecycle states (Google Play Billing)",
+        "url": "https://developer.android.com/google/play/billing/lifecycle/subscriptions",
+        "publisher": "Android Developers"
+      },
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it.",
+      "related": [
+        {
+          "title": "RevenueDot: payment recovery",
+          "url": "https://revenuedot.app/docs/guides/payment-recovery",
+          "publisher": "RevenueDot docs"
+        }
+      ]
+    },
+    {
+      "id": "web-checkout-where-allowed",
+      "name": "Web checkout where the store allows it",
+      "summary": "The purchase button opens a web checkout instead of the store sheet, for apps and regions where the store rules allow it.",
+      "structure": [
+        "Headline",
+        "Plans",
+        "Button that opens the web checkout",
+        "Plain note on where the customer pays"
+      ],
+      "whenItWorks": "Apps in programs or regions where outside purchase links are allowed and where web pricing is a deliberate choice.",
+      "whenToAvoid": "Any app where the store requires in-app purchase for the digital good. Check the current rules before shipping.",
+      "rules": [
+        "Apple 3.1.1 and 3.1.3 and Google's Payments policy decide whether this is allowed for your app and country.",
+        "Re-check the rules at release time: they change."
+      ],
+      "implementation": {
+        "swiftui": "Load Purchases.shared.offerings().current, render availablePackages in a SwiftUI view, or use RevenueCatUI's PaywallView to show a paywall built in the dashboard. RevenueDot supports purchase links and web billing; read its web billing guide.",
+        "compose": "Load awaitOfferings().current and render availablePackages in a composable; the purchases-ui artifact renders dashboard paywalls. RevenueDot supports purchase links and web billing; read its web billing guide.",
+        "react-native": "Load Purchases.getOfferings(), render offerings.current.availablePackages; react-native-purchases-ui renders dashboard paywalls. RevenueDot supports purchase links and web billing; read its web billing guide.",
+        "flutter": "Load Purchases.getOfferings(), render offerings.current.availablePackages; purchases_ui_flutter renders dashboard paywalls. RevenueDot supports purchase links and web billing; read its web billing guide."
+      },
+      "guidelineIds": [
+        "apple-3-1-1-iap-and-restore",
+        "google-payments-policy"
+      ],
+      "source": {
+        "title": "Payments policy",
+        "url": "https://support.google.com/googleplay/android-developer/answer/9858738",
+        "publisher": "Google Play Console Help"
+      },
+      "related": [
+        {
+          "title": "App Review Guidelines, section 3.1.2",
+          "url": "https://developer.apple.com/app-store/review/guidelines/",
+          "publisher": "Apple"
+        },
+        {
+          "title": "RevenueDot: web billing",
+          "url": "https://revenuedot.app/docs/guides/web-billing",
+          "publisher": "RevenueDot docs"
+        }
+      ],
+      "checked": "2026-10-03",
+      "evidence": "Design guidance drawn from the cited page. It is not a measured result for your app: test it."
+    }
+  ]
+}

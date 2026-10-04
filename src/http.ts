@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { createClient, DEFAULT_BASE_URL } from "./client.js";
 import { createMcpServer, VERSION } from "./server.js";
+import { createKitServer } from "./kit/server.js";
 
 export interface HttpOptions {
   /** RevenueDot server; also the OAuth authorization server. */
@@ -93,6 +94,15 @@ export function createHttpApp(opts: HttpOptions = {}) {
     return transport.handleRequest(c.req.raw);
   };
   for (const [path, exclude] of Object.entries(PROFILES)) app.all(path, handler(exclude));
+
+  // The free monetization knowledge server: six read-only tools, no sign-in, no RevenueDot API call. It publishes no
+  // protected resource metadata, so clients never start OAuth for it.
+  app.all("/kit/mcp", async (c) => {
+    const server = createKitServer();
+    const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+    await server.connect(transport);
+    return transport.handleRequest(c.req.raw);
+  });
 
   return app;
 }

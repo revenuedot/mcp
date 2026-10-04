@@ -4,6 +4,8 @@ MCP server for RevenueDot (`@revenuedot/mcp`). Layout:
 - `src/tools.ts`: tool definitions and executors. They depend only on zod and `src/client.ts`, never on MCP, so the Tier 2 in-app agent in `revenuedot/revenuedot` imports them from `@revenuedot/mcp/tools`. Add a tool here once and both surfaces get it.
 - `src/server.ts` registers the tools on an MCP server; `src/http.ts` is the Streamable HTTP endpoint and OAuth protected resource metadata (Node and Workers); `src/worker.ts` is the Cloudflare Worker; `src/cli.ts` is `npx @revenuedot/mcp` (stdio, or `--http`).
 
+- `src/kit/` is the free, no-auth monetization knowledge server (six read-only tools, JSON data in `src/kit/data/`) served at `/kit/mcp` by `src/http.ts`. It is ported from `revenuedot/monetization-kit`; it never touches the API client or `src/tools.ts`, and the other routes (`/mcp`, `/claude/mcp`, `/chatgpt/mcp`) must stay as they are because the Claude and ChatGPT listings use them. `src/kit/skills.json` lists the plugin's monetization skills; `test/kit.test.ts` checks it against `../agent-skills` when present.
+
 Rules
 - Use RevenueCat's tool name when a tool does the same thing (see their tools reference); keep the set small and well described.
 - Every tool is a thin call to the REST API v2. Auth and scope checks live in the server, never here.
