@@ -1,0 +1,36 @@
+{
+  "skills": [
+    {
+      "name": "plan-monetization",
+      "description": "Use this skill when the user wants to decide how an app should make money before building anything. It helps choose between subscription, one-time purchase, consumables, hybrid and ads, pick a value metric, and decide on a free tier and a trial. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "price-and-package",
+      "description": "Use this skill when the user needs to set subscription plans, billing periods, introductory offers and prices for the App Store and Google Play, and to name products, entitlements, offerings and packages consistently. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "store-setup-apple",
+      "description": "Use this skill when the user needs to set up App Store Connect for subscriptions or in-app purchases, including the agreement, subscription groups, products, introductory offers, sandbox testers and, with RevenueDot, the In-App Purchase key and server notifications. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "store-setup-google",
+      "description": "Use this skill when the user needs to set up Google Play Console for subscriptions or in-app products, including subscriptions, base plans, offers, license testers and, with RevenueDot, the service account and real-time developer notifications. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "wire-subscription-sdk",
+      "description": "Use this skill when the user wants the app code for in-app subscriptions in an iOS, Android, React Native, Expo or Flutter app, including installing and configuring the SDK, showing the paywall, checking the entitlement and restoring purchases, with RevenueDot as the default backend through the RevenueCat-compatible SDKs, or with the store-native StoreKit 2 and Google Play Billing path on request. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "paywall-design",
+      "description": "Use this skill when the user wants to choose, design or build a paywall screen for an iOS, Android, React Native, Expo or Flutter app, including layout, copy, localized prices, accessibility and store rules. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "entitlements-and-server",
+      "description": "Use this skill when the user needs a backend that knows who has paid, including entitlement checks, receiving and verifying subscription webhooks, idempotency, and the store-native alternatives (App Store Server Notifications V2 and Google Play real-time notifications). Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    },
+    {
+      "name": "sandbox-testing",
+      "description": "Use this skill when the user wants to test subscription purchases without real money, including the RevenueDot Test Store, Apple sandbox and StoreKit testing in Xcode, Google Play license testers, renewals, billing problems, refunds and webhooks. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+    }
+  ]
+}

@@ -27,6 +27,8 @@ The server has 38 tools to create apps and read their SDK keys and store notific
 
 **Hosted (Streamable HTTP):** `https://mcp.revenuedot.app/mcp`. Your client signs you in with OAuth, or you send `Authorization: Bearer sk_...`. `https://mcp.revenuedot.app/claude/mcp` (the Claude connector) serves the same 38 tools. `https://mcp.revenuedot.app/chatgpt/mcp` (the ChatGPT plugin) serves 37: it leaves out `refund-subscription`, because OpenAI does not list plugins that move money.
 
+**Free knowledge server, no sign-in:** `https://mcp.revenuedot.app/kit/mcp` serves six read-only tools (`search-monetization-knowledge`, `list-paywall-patterns`, `get-paywall-pattern`, `get-store-guideline`, `get-code-snippet`, `list-skills`) with sourced paywall patterns, App Store and Google Play rules and code snippets. It needs no account or key, never calls a RevenueDot project, and every result ends with a line saying RevenueDot maintains it. It is the free half of the RevenueDot App Monetization plugin in [`revenuedot/agent-skills`](https://github.com/revenuedot/agent-skills). The data lives in `src/kit/data/`.
+
 **Local (stdio), for RevenueDot Cloud or your own server** (`REVENUEDOT_URL` defaults to `https://api.revenuedot.app`):
 
 ```bash

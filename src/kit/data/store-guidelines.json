@@ -1,0 +1,95 @@
+{
+  "version": "0.1.0",
+  "guidelines": [
+    {
+      "id": "apple-3-1-1-iap-and-restore",
+      "store": "apple",
+      "title": "Apple 3.1.1: unlock digital features with in-app purchase and offer a restore mechanism",
+      "rule": "Features, functionality, content and subscriptions unlocked inside an app must use in-app purchase. Apple also asks for a restore mechanism for restorable purchases.",
+      "inPractice": "Put a visible Restore purchases button on the paywall and in settings, and call the SDK's restore (RevenueCat-compatible SDKs: restorePurchases; StoreKit 2: AppStore.sync). Do not link to an outside checkout from the app unless guideline 3.1.3 or a current Apple program allows it for your app.",
+      "source": { "title": "App Review Guidelines, section 3", "url": "https://developer.apple.com/app-store/review/guidelines/", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-3-1-2a-trial-disclosure",
+      "store": "apple",
+      "title": "Apple 3.1.2(a): say what a free trial is before it starts",
+      "rule": "Before a trial starts, the app must clearly state its duration, what stops working when it ends, and any charge that follows. Auto-renewable subscriptions need ongoing value, a period of at least seven days, and must work across the user's devices.",
+      "inPractice": "Put the trial length, the price after the trial and the renewal date logic in plain text next to the purchase button, in the same screen. Do not offer a one-day subscription period.",
+      "source": { "title": "App Review Guidelines, section 3.1.2", "url": "https://developer.apple.com/app-store/review/guidelines/", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-3-1-2c-describe-subscription",
+      "store": "apple",
+      "title": "Apple 3.1.2(c): describe what the customer gets for the price",
+      "rule": "Before asking a customer to subscribe, clearly describe what the user will get for the price, such as storage, service access or content per period.",
+      "inPractice": "List the concrete benefits on the paywall, show the price and billing period of the selected plan, and link Terms of Use and Privacy Policy from it.",
+      "source": { "title": "App Review Guidelines, section 3.1.2", "url": "https://developer.apple.com/app-store/review/guidelines/", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-5-1-1v-account-deletion",
+      "store": "apple",
+      "title": "Apple 5.1.1(v): apps that create accounts must let users delete them in the app",
+      "rule": "If the app supports account creation, it must also offer account deletion inside the app.",
+      "inPractice": "If your paywall sits behind sign-in, ship an in-app Delete account path before submission. Deleting the account does not cancel the store subscription; tell the user how to cancel it in their store settings.",
+      "source": { "title": "App Review Guidelines, section 5.1.1", "url": "https://developer.apple.com/app-store/review/guidelines/", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-small-business-program",
+      "store": "apple",
+      "title": "Apple Small Business Program: 15% commission under 1 million USD of proceeds",
+      "rule": "Developers who earned up to 1 million USD in proceeds in the prior calendar year (and stay under it in the current year) pay a 15% commission on paid apps and in-app purchases instead of the standard rate. Enrolment requires the Account Holder and the latest Paid Apps Agreement.",
+      "inPractice": "Enrol before you price: it changes net revenue per subscriber. Declare every associated developer account, because their proceeds count together.",
+      "source": { "title": "App Store Small Business Program", "url": "https://developer.apple.com/app-store/small-business-program/", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-subscription-price-increases",
+      "store": "apple",
+      "title": "Apple price increases: some need the subscriber's consent or the subscription ends",
+      "rule": "Apple lets you schedule one future price change per storefront and billing plan. A price decrease applies to existing subscribers automatically and cannot be reversed. An increase may need subscriber consent (for example in regions that require it, or for a large increase); a subscriber who does not consent loses the subscription at the end of the current period.",
+      "inPractice": "Price correctly at launch. When raising prices, choose in App Store Connect whether existing subscribers keep their price, and watch for the consent notices.",
+      "source": { "title": "Manage pricing for auto-renewable subscriptions", "url": "https://developer.apple.com/help/app-store-connect/manage-subscriptions/manage-pricing-for-auto-renewable-subscriptions", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "apple-intro-offers-one-per-group",
+      "store": "apple",
+      "title": "Apple introductory offers: one per customer per subscription group",
+      "rule": "Each customer can redeem one introductory offer (free trial, pay as you go or pay up front) per subscription group, however many products the group holds. Created offers cannot be edited; delete and recreate them.",
+      "inPractice": "Show 'Start free trial' only to customers who are eligible, and plain pricing to everyone else. Put every plan a customer may switch between in one group so they cannot collect several trials.",
+      "source": { "title": "Set up introductory offers for auto-renewable subscriptions", "url": "https://developer.apple.com/help/app-store-connect/manage-subscriptions/set-up-introductory-offers-for-auto-renewable-subscriptions", "publisher": "Apple" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "google-payments-policy",
+      "store": "google",
+      "title": "Google Play Payments policy: use Play Billing for digital goods",
+      "rule": "Apps distributed on Google Play must use Google Play's billing system for in-app purchases of digital goods such as subscriptions, app features and virtual currency. Physical goods and services, peer-to-peer payments and a few other cases are exempt, and user-choice billing exists in eligible countries for developers who enrol.",
+      "inPractice": "Sell digital subscriptions through Play Billing (the SDK does this). The displayed price must match the Play purchase screen. Check the policy page before using any other checkout.",
+      "source": { "title": "Payments policy", "url": "https://support.google.com/googleplay/android-developer/answer/9858738", "publisher": "Google Play Console Help" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "google-acknowledge-within-3-days",
+      "store": "google",
+      "title": "Google Play: acknowledge every purchase within 3 days or it is refunded",
+      "rule": "After granting access, acknowledge the purchase (or consume a consumable) within 3 days. Unacknowledged purchases are refunded automatically and access is revoked. Only grant access in the PURCHASED state, never while PENDING.",
+      "inPractice": "A backend such as RevenueDot acknowledges for you once the Play service account is connected. If you go store-native, acknowledge from your server after verifying the purchase token.",
+      "source": { "title": "Integrate the Google Play Billing Library", "url": "https://developer.android.com/google/play/billing/integrate", "publisher": "Android Developers" },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "google-billing-library-8",
+      "store": "google",
+      "title": "Google Play Billing Library 8 or later is required for new apps and updates",
+      "rule": "Google's page states that new apps and app updates must use Play Billing Library version 8 or later after 31 August 2026, with an extension available until 1 November 2026 on request.",
+      "inPractice": "Check the Billing Library version your SDK bundles before you submit an update. RevenueCat-compatible Android SDKs bring their own Billing Library; use a current SDK release.",
+      "source": { "title": "Integrate the Google Play Billing Library", "url": "https://developer.android.com/google/play/billing/integrate", "publisher": "Android Developers" },
+      "checked": "2026-10-03"
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "version": "0.1.0",
+  "snippets": [
+    {
+      "id": "ios-configure",
+      "title": "Configure the RevenueCat iOS SDK against a RevenueDot server",
+      "platform": "ios",
+      "task": "configure",
+      "backend": "revenuedot",
+      "language": "swift",
+      "code": "import RevenueCat\n\n// Set the proxy URL before configure. Use the public app key (appl_...) from the RevenueDot dashboard.\nPurchases.proxyURL = URL(string: \"https://api.revenuedot.app\")!\nPurchases.configure(\n    with: Configuration.Builder(withAPIKey: \"appl_YOUR_PUBLIC_KEY\")\n        .with(entitlementVerificationMode: .disabled)\n        .build()\n)",
+      "notes": "Install the SDK with Swift Package Manager (RevenueCat/purchases-ios-spm, product RevenueCat). Verification stays disabled because the stock SDK checks RevenueCat's signing key. Self-hosting: use your own server URL. The key is the app's public key, which is meant to ship inside the app.",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: iOS SDK",
+        "url": "https://revenuedot.app/docs/sdks/ios",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "android-configure",
+      "title": "Configure the RevenueCat Android SDK against a RevenueDot server",
+      "platform": "android",
+      "task": "configure",
+      "backend": "revenuedot",
+      "language": "kotlin",
+      "code": "import com.revenuecat.purchases.EntitlementVerificationMode\nimport com.revenuecat.purchases.Purchases\nimport com.revenuecat.purchases.PurchasesConfiguration\nimport java.net.URL\n\nclass MainApplication : Application() {\n    override fun onCreate() {\n        super.onCreate()\n        Purchases.proxyURL = URL(\"https://api.revenuedot.app\")\n        Purchases.configure(\n            PurchasesConfiguration.Builder(this, \"goog_YOUR_PUBLIC_KEY\")\n                .entitlementVerificationMode(EntitlementVerificationMode.DISABLED)\n                .build()\n        )\n    }\n}",
+      "notes": "The stock Android SDK still sends diagnostics and paywall events to RevenueCat's hosts in proxy mode; the RevenueDot fork (Maven group app.revenuedot.purchases) sends them to your server. The emulator reaches your computer at http://10.0.2.2:8787 and needs a cleartext network config for plain http.",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: Android SDK",
+        "url": "https://revenuedot.app/docs/sdks/android",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "react-native-configure",
+      "title": "Configure react-native-purchases (React Native and Expo) against RevenueDot",
+      "platform": "react-native",
+      "task": "configure",
+      "backend": "revenuedot",
+      "language": "typescript",
+      "code": "import { Platform } from \"react-native\";\nimport Purchases from \"react-native-purchases\";\n\n// Await the proxy URL before configure. Verification is already off by default in this SDK.\nawait Purchases.setProxyURL(\"https://api.revenuedot.app\");\nPurchases.configure({ apiKey: Platform.OS === \"ios\" ? \"appl_YOUR_PUBLIC_KEY\" : \"goog_YOUR_PUBLIC_KEY\" });",
+      "notes": "In Expo Go and on the web the SDK only accepts a Test Store key (test_...). Real store purchases need a development build (expo run:ios or expo run:android).",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: React Native and Expo",
+        "url": "https://revenuedot.app/docs/sdks/react-native",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "flutter-configure",
+      "title": "Configure purchases_flutter against a RevenueDot server",
+      "platform": "flutter",
+      "task": "configure",
+      "backend": "revenuedot",
+      "language": "dart",
+      "code": "import 'dart:io' show Platform;\nimport 'package:purchases_flutter/purchases_flutter.dart';\n\nFuture<void> initPurchases() async {\n  await Purchases.setProxyURL('https://api.revenuedot.app');\n  await Purchases.configure(\n    PurchasesConfiguration(Platform.isIOS ? 'appl_YOUR_PUBLIC_KEY' : 'goog_YOUR_PUBLIC_KEY'),\n  );\n}",
+      "notes": "Flutter web ignores the proxy URL in the stock package; the RevenueDot fork fixes that. Verification defaults to disabled in this package.",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: Flutter",
+        "url": "https://revenuedot.app/docs/sdks/flutter",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "ios-purchase-and-entitlement",
+      "title": "Show the current offering, buy a package and check the pro entitlement (iOS)",
+      "platform": "ios",
+      "task": "purchase",
+      "backend": "revenuedot",
+      "language": "swift",
+      "code": "let offerings = try await Purchases.shared.offerings()\nif let package = offerings.current?.availablePackages.first {\n    let result = try await Purchases.shared.purchase(package: package)\n    if !result.userCancelled, result.customerInfo.entitlements[\"pro\"]?.isActive == true {\n        // Unlock pro features.\n    }\n}\n\n// Restore, for the Restore purchases button:\nlet info = try await Purchases.shared.restorePurchases()\nlet isPro = info.entitlements[\"pro\"]?.isActive == true",
+      "notes": "Check an entitlement ('pro'), never a product id, so adding a plan later needs no app update. A cancelled purchase is a normal result, not an error.",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: iOS SDK",
+        "url": "https://revenuedot.app/docs/sdks/ios",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "react-native-purchase-and-entitlement",
+      "title": "Buy a package and check the pro entitlement (React Native and Expo)",
+      "platform": "react-native",
+      "task": "purchase",
+      "backend": "revenuedot",
+      "language": "typescript",
+      "code": "const customerInfo = await Purchases.getCustomerInfo();\nconst isPro = customerInfo.entitlements.active[\"pro\"] !== undefined;\n\nconst offerings = await Purchases.getOfferings();\nconst pkg = offerings.current?.availablePackages[0];\nif (pkg) {\n  try {\n    const { customerInfo: after } = await Purchases.purchasePackage(pkg);\n    const nowPro = after.entitlements.active[\"pro\"] !== undefined;\n  } catch (e: any) {\n    if (!e.userCancelled) throw e;\n  }\n}",
+      "notes": "A cancelled purchase sets userCancelled on the error. Offer Restore with Purchases.restorePurchases().",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: React Native and Expo",
+        "url": "https://revenuedot.app/docs/sdks/react-native",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "android-purchase-and-entitlement",
+      "title": "Buy a package and check the pro entitlement (Android, coroutines)",
+      "platform": "android",
+      "task": "purchase",
+      "backend": "revenuedot",
+      "language": "kotlin",
+      "code": "val customerInfo = Purchases.sharedInstance.awaitCustomerInfo()\nval isPro = customerInfo.entitlements[\"pro\"]?.isActive == true\n\nval offerings = Purchases.sharedInstance.awaitOfferings()\nval pkg = offerings.current?.availablePackages?.firstOrNull() ?: return\ntry {\n    val result = Purchases.sharedInstance.awaitPurchase(PurchaseParams.Builder(activity, pkg).build())\n    val nowPro = result.customerInfo.entitlements[\"pro\"]?.isActive == true\n} catch (e: PurchasesTransactionException) {\n    if (e.userCancelled) return\n}",
+      "notes": "Needs the purchases coroutine helpers and an Activity for the purchase sheet.",
+      "status": "copied-from-revenuedot-docs",
+      "source": {
+        "title": "RevenueDot: Android SDK",
+        "url": "https://revenuedot.app/docs/sdks/android",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "webhook-verify-node",
+      "title": "Verify a RevenueDot webhook signature on the raw body (Node.js)",
+      "platform": "server",
+      "task": "webhook-verification",
+      "backend": "revenuedot",
+      "language": "javascript",
+      "code": "import { createHmac, timingSafeEqual } from \"node:crypto\";\n\nexport function verifySignature(rawBody, header, secret, { now = new Date(), toleranceSeconds = 300 } = {}) {\n  const match = /(?:^|,)\\s*t=(\\d+)\\s*,\\s*v1=([0-9a-f]{64})\\s*(?:,|$)/.exec(header ?? \"\");\n  if (!match) return false;\n  const timestamp = Number(match[1]);\n  if (Math.abs(Math.floor(now.getTime() / 1000) - timestamp) > toleranceSeconds) return false;\n  const expected = createHmac(\"sha256\", secret).update(`${timestamp}.`).update(rawBody).digest();\n  const received = Buffer.from(match[2], \"hex\");\n  return received.length === expected.length && timingSafeEqual(received, expected);\n}",
+      "notes": "Pass the raw request bytes, not re-serialized JSON. The header is X-RevenueCat-Webhook-Signature. Answer 200 fast and ignore an event.id you have already handled. Load the signing secret from your backend's secret store, never from the app.",
+      "status": "executed-in-test",
+      "source": {
+        "title": "RevenueDot: webhooks",
+        "url": "https://revenuedot.app/docs/guides/webhooks",
+        "publisher": "RevenueDot docs"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "storekit2-purchase-and-restore",
+      "title": "Store-native: buy, read entitlements and restore with StoreKit 2",
+      "platform": "ios",
+      "task": "purchase",
+      "backend": "store-native",
+      "language": "swift",
+      "code": "import StoreKit\n\nlet products = try await Product.products(for: [\"pro_monthly\", \"pro_annual\"])\nguard let product = products.first else { return }\n\nswitch try await product.purchase() {\ncase .success(let verification):\n    if case .verified(let transaction) = verification {\n        // Grant access, then finish the transaction.\n        await transaction.finish()\n    }\ncase .userCancelled, .pending:\n    break\n@unknown default:\n    break\n}\n\n// Current entitlements (also after reinstall):\nfor await result in Transaction.currentEntitlements {\n    if case .verified(let transaction) = result, transaction.productID.hasPrefix(\"pro_\") {\n        // The customer has access.\n    }\n}\n\n// Restore purchases button:\ntry await AppStore.sync()",
+      "notes": "Store-native means you verify transactions and track renewals yourself, usually with the App Store Server API and App Store Server Notifications V2 (signed JWS payloads). Product ids must match App Store Connect exactly. Written from Apple's API names; not compiled in this repository.",
+      "status": "written-from-official-docs-not-compiled",
+      "source": {
+        "title": "StoreKit: restoring purchased products",
+        "url": "https://developer.apple.com/documentation/storekit/in-app_purchase/original_api_for_in-app_purchase/restoring_purchased_products",
+        "publisher": "Apple"
+      },
+      "checked": "2026-10-03"
+    },
+    {
+      "id": "play-billing-acknowledge",
+      "title": "Store-native: acknowledge a verified Google Play purchase",
+      "platform": "android",
+      "task": "acknowledge",
+      "backend": "store-native",
+      "language": "kotlin",
+      "code": "if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {\n    // Verify the purchase token on your backend first, then grant access.\n    if (!purchase.isAcknowledged) {\n        val params = AcknowledgePurchaseParams.newBuilder()\n            .setPurchaseToken(purchase.purchaseToken)\n            .build()\n        billingClient.acknowledgePurchase(params) { billingResult ->\n            // Retry on failure: unacknowledged purchases are refunded after 3 days.\n        }\n    }\n}",
+      "notes": "Never grant access while the state is PENDING. Call queryPurchasesAsync on launch and when the app returns to the foreground. A backend should acknowledge from the server for better security.",
+      "status": "written-from-official-docs-not-compiled",
+      "source": {
+        "title": "Integrate the Google Play Billing Library",
+        "url": "https://developer.android.com/google/play/billing/integrate",
+        "publisher": "Android Developers"
+      },
+      "checked": "2026-10-03"
+    }
+  ]
+}
