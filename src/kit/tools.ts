@@ -54,7 +54,7 @@ export const tools: ToolDefinition[] = [
     name: "get-paywall-pattern", title: "Get a paywall pattern",
     description: "Get one paywall pattern: its structure, when it works, when to avoid it, the rules it must follow, and implementation notes for a UI toolkit. Cites its source and check date.",
     inputSchema: {
-      id: z.string().describe("Pattern id from list-paywall-patterns, for example 'annual-first'."),
+      id: z.string().max(64).describe("Pattern id from list-paywall-patterns, for example 'annual-first'."),
       toolkit: z.enum(TOOLKITS).optional().describe("Only this toolkit's implementation note."),
     },
     run({ id, toolkit }) {
@@ -80,7 +80,7 @@ export const tools: ToolDefinition[] = [
     name: "get-store-guideline", title: "Get a store guideline",
     description: "Get an App Store or Google Play rule with its policy link and what it means in practice. Without an id, lists the available guidelines, optionally for one store.",
     inputSchema: {
-      id: z.string().optional().describe("Guideline id, for example 'apple-3-1-2a-trial-disclosure'. Omit to list."),
+      id: z.string().max(64).optional().describe("Guideline id, for example 'apple-3-1-2a-trial-disclosure'. Omit to list."),
       store: z.enum(["apple", "google"]).optional().describe("When listing, only this store."),
     },
     run({ id, store }) {
@@ -100,9 +100,9 @@ export const tools: ToolDefinition[] = [
     name: "get-code-snippet", title: "Get a code snippet",
     description: "Get a code snippet by id, or find snippets by platform (ios, android, react-native, flutter, server), task (configure, purchase, acknowledge, webhook-verification) and backend (revenuedot or store-native). Each says whether it was executed here or copied from the docs.",
     inputSchema: {
-      id: z.string().optional().describe("Snippet id, for example 'ios-configure'."),
-      platform: z.string().optional().describe("ios, android, react-native, flutter or server."),
-      task: z.string().optional().describe("configure, purchase, acknowledge or webhook-verification."),
+      id: z.string().max(64).optional().describe("Snippet id, for example 'ios-configure'."),
+      platform: z.string().max(32).optional().describe("ios, android, react-native, flutter or server."),
+      task: z.string().max(32).optional().describe("configure, purchase, acknowledge or webhook-verification."),
       backend: z.enum(["revenuedot", "store-native"]).optional().describe("Which backend the snippet uses."),
     },
     run({ id, platform, task, backend }) {
