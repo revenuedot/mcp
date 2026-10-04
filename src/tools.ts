@@ -332,13 +332,14 @@ export const tools: ToolDefinition[] = [
   }),
   define({
     name: "list-events", title: "List events",
-    description: "The event log, newest first: the same events webhooks send (INITIAL_PURCHASE, RENEWAL, CANCELLATION, BILLING_ISSUE, EXPIRATION ...). Filter by customer, type or environment to see why a customer lost access.",
+    description: "The event log, newest first: the same events webhooks send (INITIAL_PURCHASE, RENEWAL, CANCELLATION, BILLING_ISSUE, EXPIRATION ...). Filter by customer, type or environment to see why a customer lost access. Paywall events (PAYWALL_IMPRESSION, PAYWALL_CLOSE ...) are left out unless `types` names them or include_paywall_events is true.",
     inputSchema: {
       project_id: projectId, customer_id: z.string().optional().describe("Only this app user id."),
-      types: z.array(z.string()).max(20).optional().describe("Only these event types, e.g. [\"CANCELLATION\", \"EXPIRATION\"]."), environment, limit, starting_after: startingAfter,
+      types: z.array(z.string()).max(20).optional().describe("Only these event types, e.g. [\"CANCELLATION\", \"EXPIRATION\"]."),
+      include_paywall_events: z.boolean().optional().describe("Also return paywall views, closes and taps (PAYWALL_*). Default false."), environment, limit, starting_after: startingAfter,
     },
     annotations: READ, scopes: ["customer_information:customers:read"],
-    run: async (c, a) => c.request("GET", `${await P(c, a.project_id)}/events`, { query: { customer: a.customer_id, type: a.types, environment: a.environment, limit: a.limit, starting_after: a.starting_after } }),
+    run: async (c, a) => c.request("GET", `${await P(c, a.project_id)}/events`, { query: { customer: a.customer_id, type: a.types, include_paywall_events: a.include_paywall_events ? "true" : undefined, environment: a.environment, limit: a.limit, starting_after: a.starting_after } }),
   }),
   define({
     name: "set-customer-attributes", title: "Set customer attributes",
