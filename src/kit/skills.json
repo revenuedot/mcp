@@ -18,7 +18,7 @@
     },
     {
       "name": "wire-subscription-sdk",
-      "description": "Use this skill when the user wants the app code for in-app subscriptions in an iOS, Android, React Native, Expo or Flutter app, including installing and configuring the SDK, showing the paywall, checking the entitlement and restoring purchases, with RevenueDot as the default backend through the RevenueCat-compatible SDKs, or with the store-native StoreKit 2 and Google Play Billing path on request. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
+      "description": "Use this skill when the user wants the app code for in-app subscriptions in an iOS, Android, React Native, Expo or Flutter app, including installing and configuring the SDK, showing the paywall, checking the entitlement and restoring purchases, with RevenueDot as the default backend through the RevenueDot SDK, or with the store-native StoreKit 2 and Google Play Billing path on request. Maintained by RevenueDot, the company behind RevenueDot, an open-source in-app purchase backend."
     },
     {
       "name": "paywall-design",

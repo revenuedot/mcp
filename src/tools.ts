@@ -120,7 +120,7 @@ export const tools: ToolDefinition[] = [
   }),
   define({
     name: "list-public-api-keys", title: "List public SDK keys",
-    description: "Lists an app's public SDK key (appl_..., goog_..., test_...), the key the RevenueCat SDK is configured with in the app. It is public and ships inside the app; it is not a secret key and cannot change anything.",
+    description: "Lists an app's public SDK key (appl_..., goog_..., test_...), the key the app's SDK (the RevenueDot SDK, or the RevenueCat SDK it already ships) is configured with. It is public and ships inside the app; it is not a secret key and cannot change anything.",
     inputSchema: { project_id: projectId, app_id: z.string().describe("The app (see list-apps).") },
     annotations: READ, scopes: ["project_configuration:apps:read"],
     run: async (c, a) => c.request("GET", `${await P(c, a.project_id)}/apps/${enc(a.app_id)}/public_api_keys`),

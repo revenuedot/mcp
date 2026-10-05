@@ -3,71 +3,71 @@
   "snippets": [
     {
       "id": "ios-configure",
-      "title": "Configure the RevenueCat iOS SDK against a RevenueDot server",
+      "title": "Configure the RevenueDot iOS SDK",
       "platform": "ios",
       "task": "configure",
       "backend": "revenuedot",
       "language": "swift",
-      "code": "import RevenueCat\n\n// Set the proxy URL before configure. Use the public app key (appl_...) from the RevenueDot dashboard.\nPurchases.proxyURL = URL(string: \"https://api.revenuedot.app\")!\nPurchases.configure(\n    with: Configuration.Builder(withAPIKey: \"appl_YOUR_PUBLIC_KEY\")\n        .with(entitlementVerificationMode: .disabled)\n        .build()\n)",
-      "notes": "Install the SDK with Swift Package Manager (RevenueCat/purchases-ios-spm, product RevenueCat). Verification stays disabled because the stock SDK checks RevenueCat's signing key. Self-hosting: use your own server URL. The key is the app's public key, which is meant to ship inside the app.",
+      "code": "import RevenueCat   // the RevenueDot SDK keeps the module name of the open-source SDK it is built from\n\n// At launch. Use the public app key (appl_...) from the RevenueDot dashboard.\n// On RevenueDot Cloud the SDK already points at https://api.revenuedot.app, so the key is the only setting.\nPurchases.configure(withAPIKey: \"appl_YOUR_PUBLIC_KEY\")",
+      "notes": "Install the RevenueDot SDK with Swift Package Manager (https://github.com/revenuedot/purchases-ios, exact version 5.91.0-revenuedot, product RevenueCat) or CocoaPods (pod 'RevenueDotPurchases', '5.91.0'). It needs no RevenueCat account. Self-hosting: set Purchases.proxyURL = URL(string: \"https://your-server\")! before configure and use .with(entitlementVerificationMode: .disabled), because your server signs with its own key. An app that already ships the RevenueCat SDK keeps it, sets Purchases.proxyURL to https://api.revenuedot.app before configure and turns verification off (see https://revenuedot.app/docs/migrate).",
       "status": "copied-from-revenuedot-docs",
       "source": {
         "title": "RevenueDot: iOS SDK",
         "url": "https://revenuedot.app/docs/sdks/ios",
         "publisher": "RevenueDot docs"
       },
-      "checked": "2026-10-03"
+      "checked": "2026-10-05"
     },
     {
       "id": "android-configure",
-      "title": "Configure the RevenueCat Android SDK against a RevenueDot server",
+      "title": "Configure the RevenueDot Android SDK",
       "platform": "android",
       "task": "configure",
       "backend": "revenuedot",
       "language": "kotlin",
-      "code": "import com.revenuecat.purchases.EntitlementVerificationMode\nimport com.revenuecat.purchases.Purchases\nimport com.revenuecat.purchases.PurchasesConfiguration\nimport java.net.URL\n\nclass MainApplication : Application() {\n    override fun onCreate() {\n        super.onCreate()\n        Purchases.proxyURL = URL(\"https://api.revenuedot.app\")\n        Purchases.configure(\n            PurchasesConfiguration.Builder(this, \"goog_YOUR_PUBLIC_KEY\")\n                .entitlementVerificationMode(EntitlementVerificationMode.DISABLED)\n                .build()\n        )\n    }\n}",
-      "notes": "The stock Android SDK still sends diagnostics and paywall events to RevenueCat's hosts in proxy mode; the RevenueDot fork (Maven group app.revenuedot.purchases) sends them to your server. The emulator reaches your computer at http://10.0.2.2:8787 and needs a cleartext network config for plain http.",
+      "code": "import com.revenuecat.purchases.Purchases\nimport com.revenuecat.purchases.PurchasesConfiguration\n\nclass MainApplication : Application() {\n    override fun onCreate() {\n        super.onCreate()\n        // On RevenueDot Cloud the SDK already points at https://api.revenuedot.app, so the key is the only setting.\n        Purchases.configure(PurchasesConfiguration.Builder(this, \"goog_YOUR_PUBLIC_KEY\").build())\n    }\n}",
+      "notes": "Install the RevenueDot SDK from Maven Central: implementation(\"app.revenuedot.purchases:purchases:10.23.3\"). The Kotlin packages stay com.revenuecat.purchases.*, and it sends diagnostics and paywall events to RevenueDot too. Self-hosting: set Purchases.proxyURL = URL(\"https://your-server\") before configure and use EntitlementVerificationMode.DISABLED; the emulator reaches your computer at http://10.0.2.2:8787. An app that already ships the RevenueCat SDK keeps it and sets the proxy URL to https://api.revenuedot.app (see https://revenuedot.app/docs/migrate).",
       "status": "copied-from-revenuedot-docs",
       "source": {
         "title": "RevenueDot: Android SDK",
         "url": "https://revenuedot.app/docs/sdks/android",
         "publisher": "RevenueDot docs"
       },
-      "checked": "2026-10-03"
+      "checked": "2026-10-05"
     },
     {
       "id": "react-native-configure",
-      "title": "Configure react-native-purchases (React Native and Expo) against RevenueDot",
+      "title": "Configure the RevenueDot SDK for React Native and Expo",
       "platform": "react-native",
       "task": "configure",
       "backend": "revenuedot",
       "language": "typescript",
-      "code": "import { Platform } from \"react-native\";\nimport Purchases from \"react-native-purchases\";\n\n// Await the proxy URL before configure. Verification is already off by default in this SDK.\nawait Purchases.setProxyURL(\"https://api.revenuedot.app\");\nPurchases.configure({ apiKey: Platform.OS === \"ios\" ? \"appl_YOUR_PUBLIC_KEY\" : \"goog_YOUR_PUBLIC_KEY\" });",
-      "notes": "In Expo Go and on the web the SDK only accepts a Test Store key (test_...). Real store purchases need a development build (expo run:ios or expo run:android).",
+      "code": "// npm install react-native-purchases@npm:@revenuedot/react-native-purchases@10.10.2\nimport { Platform } from \"react-native\";\nimport Purchases from \"react-native-purchases\";\n\n// On RevenueDot Cloud the SDK already points at https://api.revenuedot.app, so the key is the only setting.\nPurchases.configure({ apiKey: Platform.OS === \"ios\" ? \"appl_YOUR_PUBLIC_KEY\" : \"goog_YOUR_PUBLIC_KEY\" });",
+      "notes": "The npm alias installs the RevenueDot SDK under the name react-native-purchases, so imports stay the same. In Expo Go and on the web the SDK only accepts a Test Store key (test_...); real store purchases need a development build (expo run:ios or expo run:android). Self-hosting: await Purchases.setProxyURL(\"https://your-server\") before configure. An app that already ships RevenueCat's react-native-purchases keeps it and awaits setProxyURL(\"https://api.revenuedot.app\") before configure (see https://revenuedot.app/docs/migrate).",
       "status": "copied-from-revenuedot-docs",
       "source": {
         "title": "RevenueDot: React Native and Expo",
         "url": "https://revenuedot.app/docs/sdks/react-native",
         "publisher": "RevenueDot docs"
       },
-      "checked": "2026-10-03"
+      "checked": "2026-10-05"
     },
     {
       "id": "flutter-configure",
-      "title": "Configure purchases_flutter against a RevenueDot server",
+      "title": "Configure the RevenueDot Flutter SDK",
       "platform": "flutter",
       "task": "configure",
       "backend": "revenuedot",
       "language": "dart",
-      "code": "import 'dart:io' show Platform;\nimport 'package:purchases_flutter/purchases_flutter.dart';\n\nFuture<void> initPurchases() async {\n  await Purchases.setProxyURL('https://api.revenuedot.app');\n  await Purchases.configure(\n    PurchasesConfiguration(Platform.isIOS ? 'appl_YOUR_PUBLIC_KEY' : 'goog_YOUR_PUBLIC_KEY'),\n  );\n}",
-      "notes": "Flutter web ignores the proxy URL in the stock package; the RevenueDot fork fixes that. Verification defaults to disabled in this package.",
+      "code": "import 'dart:io' show Platform;\nimport 'package:purchases_flutter/purchases_flutter.dart';\n\nFuture<void> initPurchases() async {\n  // On RevenueDot Cloud the SDK already points at https://api.revenuedot.app, so the key is the only setting.\n  await Purchases.configure(\n    PurchasesConfiguration(Platform.isIOS ? 'appl_YOUR_PUBLIC_KEY' : 'goog_YOUR_PUBLIC_KEY'),\n  );\n}",
+      "notes": "Install the RevenueDot SDK as a git dependency in pubspec.yaml: purchases_flutter: { git: { url: https://github.com/revenuedot/purchases-flutter.git, ref: 10.13.2-revenuedot } }. The pub.dev name belongs to RevenueCat, so it is not on pub.dev; imports stay package:purchases_flutter. It also works on Flutter web. Self-hosting: await Purchases.setProxyURL('https://your-server') before configure. An app that already ships RevenueCat's purchases_flutter keeps it and sets the proxy URL to https://api.revenuedot.app (see https://revenuedot.app/docs/migrate).",
       "status": "copied-from-revenuedot-docs",
       "source": {
         "title": "RevenueDot: Flutter",
         "url": "https://revenuedot.app/docs/sdks/flutter",
         "publisher": "RevenueDot docs"
       },
-      "checked": "2026-10-03"
+      "checked": "2026-10-05"
     },
     {
       "id": "ios-purchase-and-entitlement",
