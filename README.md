@@ -15,6 +15,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-0A0A0A)](LICENSE)
 [![Hosted](https://img.shields.io/badge/hosted-mcp.revenuedot.app-0A0A0A)](https://mcp.revenuedot.app/mcp)
 
+Learn more: [RevenueCat MCP server, official and open source](https://revenuedot.app/revenuecat-mcp): config for Claude Code, Claude, Codex, Cursor, ChatGPT and Windsurf, the tool table, the approval model, and what RevenueCat's own MCP server offers.
+
 </div>
 
 [![Watch the 87-second demo of RevenueDot in ChatGPT](https://revenuedot.app/videos/revenuedot-chatgpt-demo.webp)](https://revenuedot.app/videos/revenuedot-chatgpt-demo.mp4)
