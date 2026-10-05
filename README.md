@@ -9,7 +9,7 @@
 
 **Connect Claude, ChatGPT, Cursor and other AI assistants to RevenueDot, the open-source RevenueCat alternative.** 38 tools to set up apps, products, entitlements and offerings, find customers, grant access and check webhooks, hosted at `mcp.revenuedot.app` or run locally.
 
-[Main repository](https://github.com/revenuedot/revenuedot) · [Docs](https://revenuedot.app/docs/guides/connect-ai-assistants) · [Agent skills](https://github.com/revenuedot/agent-skills) · [Start free on RevenueDot Cloud](https://app.revenuedot.app/signup)
+[Main repository](https://github.com/revenuedot/revenuedot) · [Docs](https://revenuedot.app/docs/guides/connect-ai-assistants) · [Agent skills](https://github.com/revenuedot/agent-skills) · [Start for free on RevenueDot Cloud](https://app.revenuedot.app/signup)
 
 [![npm](https://img.shields.io/npm/v/%40revenuedot%2Fmcp?label=%40revenuedot%2Fmcp&color=0A0A0A)](https://www.npmjs.com/package/@revenuedot/mcp)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0A0A0A)](LICENSE)
