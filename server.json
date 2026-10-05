@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.revenuedot/mcp",
+  "description": "Open-source RevenueCat alternative: 38 tools for subscriptions, customers, webhooks and revenue.",
+  "title": "RevenueDot",
+  "version": "0.2.0",
+  "websiteUrl": "https://revenuedot.app/revenuecat-mcp",
+  "repository": {
+    "url": "https://github.com/revenuedot/mcp",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.revenuedot.app/mcp"
+    }
+  ]
+}
