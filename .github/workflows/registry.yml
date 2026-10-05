@@ -1,0 +1,26 @@
+# Publishes server.json to the official MCP registry (registry.modelcontextprotocol.io) when it changes on main.
+# Ownership of the io.github.revenuedot namespace is proven with GitHub Actions OIDC, so no personal login is needed.
+# Run by hand with workflow_dispatch to republish the same version after a registry-side change.
+name: MCP registry
+on:
+  push:
+    branches: [main]
+    paths: [server.json]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install mcp-publisher
+        run: |
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          sudo mv mcp-publisher /usr/local/bin/
+      - run: mcp-publisher validate
+      - run: mcp-publisher login github-oidc
+      - run: mcp-publisher publish
+      - name: Check the listing
+        run: curl -sf "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.revenuedot/mcp" | head -c 2000
