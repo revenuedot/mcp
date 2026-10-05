@@ -4,7 +4,9 @@ import { oauthScopesFor, tools } from "./tools.js";
 
 export const VERSION = "0.2.0";
 
-const INSTRUCTIONS = `RevenueDot is an open-source backend for in-app purchases that works with the RevenueCat SDK and API.
+const INSTRUCTIONS = `RevenueDot is an open-source backend for in-app purchases and subscriptions.
+New app: install the RevenueDot SDK (https://revenuedot.app/docs/sdks) and configure it with the app's public SDK key (list-public-api-keys); on RevenueDot Cloud nothing else is needed.
+App that already ships the RevenueCat SDK: keep it and set one line, the proxy URL (api_origin from get-app-store-settings), before configure (https://revenuedot.app/docs/migrate).
 Setup order: list-apps, then create-product per app, create-entitlement, attach-products-to-entitlement, create-offering, create-packages, attach-products-to-package.
 Support: list-customers (by app user id, email or transaction id), get-customer, list-events, then grant-customer-entitlement or extend-subscription. Refunds and cancellations move money: ask the user first.
 Health: get-project-health, get-metrics, list-webhook-deliveries.
