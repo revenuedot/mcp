@@ -66,4 +66,4 @@ jobs:
         if: inputs.dry_run != true
         run: |
           version=$(node -p "require('./mcp/package.json').version")
-          cd "$RUNNER_TEMP" && for i in $(seq 1 30); do npx -y "@revenuedot/mcp@${version}" --help >/dev/null && exit 0; sleep 10; done; exit 1
+          cd "$RUNNER_TEMP" && for i in $(seq 1 30); do npx -y --prefer-online --cache "$(mktemp -d)" "@revenuedot/mcp@${version}" --help >/dev/null && exit 0; sleep 10; done; exit 1
